@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Node modules (if any)
+node_modules/
+
+# Vendor directory (will be installed in container)
+vendor/
+
+# Environment files
+.env
+.env.*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Cache
+.cache/
+*.cache
+
+# Temporary files
+tmp/
+temp/
