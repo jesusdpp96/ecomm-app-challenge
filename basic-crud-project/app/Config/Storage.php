@@ -20,16 +20,6 @@ class Storage extends BaseConfig
     public string $productsFile = 'products.json';
 
     /**
-     * Enable automatic backup before write operations
-     */
-    public bool $enableBackup = true;
-
-    /**
-     * Maximum number of backup files to keep
-     */
-    public int $maxBackups = 10;
-
-    /**
      * Enable file locking for concurrent access protection
      */
     public bool $enableLocking = true;
