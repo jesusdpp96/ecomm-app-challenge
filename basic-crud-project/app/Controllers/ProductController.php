@@ -211,6 +211,9 @@ class ProductController extends BaseController
             $productResponse = ProductResponse::fromModel($product);
             $response = ResponseFormatter::created($productResponse->toArray(), 'Product created successfully');
 
+            // Add new CSRF token to the response for form reuse
+            $response['csrf_token'] = csrf_hash();
+
             $this->appLogger->logOperation('create_product', $product->id, $sanitizedData);
 
             return $this->response->setStatusCode(201)->setJSON($response);
@@ -373,7 +376,6 @@ class ProductController extends BaseController
         if (!$this->request->isAJAX()) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
-        
         try {
             $query = $this->request->getGet('q') ?? '';
             $query = $this->sanitizer->sanitizeString($query);

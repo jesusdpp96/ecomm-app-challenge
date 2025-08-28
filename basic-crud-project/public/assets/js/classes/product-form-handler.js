@@ -137,10 +137,14 @@ class ProductFormHandler {
             'success'
         );
 
+        // Update CSRF token if provided in response
+        if (response.csrf_token) {
+            this.updateCSRFToken(response.csrf_token);
+        }
+
         // Reset form
         this.form.reset();
         this.clearErrors();
-
     }
 
     handleErrors(errors) {
@@ -195,17 +199,27 @@ class ProductFormHandler {
     }
 
     clearErrors() {
-        // Clear all field errors
+        // Remove all error messages
         const errorElements = this.form.querySelectorAll('.error-message');
-        errorElements.forEach(el => {
-            if (!el.textContent.includes('session')) {
-                el.textContent = '';
-            }
-        });
+        errorElements.forEach(element => element.remove());
 
         // Remove error classes from inputs
-        const inputElements = this.form.querySelectorAll('.error');
-        inputElements.forEach(el => el.classList.remove('error'));
+        const inputs = this.form.querySelectorAll('.error');
+        inputs.forEach(input => input.classList.remove('error'));
+    }
+
+    /**
+     * Update CSRF token in the form
+     * @param {string} newToken - The new CSRF token
+     */
+    updateCSRFToken(newToken) {
+        const csrfInput = this.form.querySelector('input[name="csrf_test_name"]');
+        if (csrfInput) {
+            csrfInput.value = newToken;
+            console.log('CSRF token updated successfully');
+        } else {
+            console.warn('CSRF token input not found in form');
+        }
     }
 
     setLoadingState(isLoading) {
