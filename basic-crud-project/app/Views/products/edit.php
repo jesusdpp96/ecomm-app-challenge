@@ -73,4 +73,6 @@
 <?= $this->section('scripts') ?>
 <script src="<?= base_url('assets/js/actions/delete-product.js') ?>"></script>
 <script src="<?= base_url('assets/js/classes/ui-helpers.js') ?>"></script>
+<script src="<?= base_url('assets/js/classes/form-validator.js') ?>"></script>
+<script src="<?= base_url('assets/js/classes/product-form-handler.js') ?>"></script>
 <?= $this->endSection() ?>

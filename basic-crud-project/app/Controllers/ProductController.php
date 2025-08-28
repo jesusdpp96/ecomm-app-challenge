@@ -277,6 +277,9 @@ class ProductController extends BaseController
             $productResponse = ProductResponse::fromModel($product);
             $response = ResponseFormatter::updated($productResponse->toArray(), 'Product updated successfully');
 
+            // Add new CSRF token to the response for form reuse
+            $response['csrf_token'] = csrf_hash();
+
             $this->appLogger->logOperation('update_product', $id, $sanitizedData);
 
             return $this->response->setJSON($response);

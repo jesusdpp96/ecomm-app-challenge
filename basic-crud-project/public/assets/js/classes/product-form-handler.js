@@ -3,6 +3,8 @@ class ProductFormHandler {
     constructor(formId) {
         this.form = document.getElementById(formId);
         this.submitBtn = null;
+        this.isEditForm = false;
+        this.productId = null;
         this.init();
     }
 
@@ -10,6 +12,11 @@ class ProductFormHandler {
         if (!this.form) return;
 
         this.submitBtn = this.form.querySelector('button[type="submit"]');
+        
+        // Determine if this is an edit form
+        this.productId = this.form.dataset.productId;
+        this.isEditForm = !!this.productId;
+        
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
     }
 
@@ -89,27 +96,36 @@ class ProductFormHandler {
     }
 
     async submitProduct(data) {
-        // Try sending as FormData instead of JSON for better CSRF compatibility
-        const formData = new FormData();
+        // Determine endpoint and method based on form type
+        const endpoint = this.isEditForm ? `/api/products/${this.productId}` : '/api/products';
+        const method = this.isEditForm ? 'PUT' : 'POST';
         
-        // Add all data fields to FormData
-        Object.keys(data).forEach(key => {
-            formData.append(key, data[key]);
-        });
+        // For PUT requests, send as JSON; for POST, use FormData
+        let body;
+        let headers = {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
         
-        console.log('FormData entries:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
+        if (this.isEditForm) {
+            // Send as JSON for PUT requests
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify(data);
+        } else {
+            // Send as FormData for POST requests (better CSRF compatibility)
+            const formData = new FormData();
+            Object.keys(data).forEach(key => {
+                formData.append(key, data[key]);
+            });
+            body = formData;
         }
         
-        const response = await fetch('/api/products', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-                // Don't set Content-Type for FormData - let browser set it with boundary
-            },
-            body: formData
+        console.log(`Submitting ${method} request to ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
+            method: method,
+            headers: headers,
+            body: body
         });
 
         const result = await response.json();
@@ -132,18 +148,22 @@ class ProductFormHandler {
     }
 
     handleSuccess(response) {
-        UIHelpers.showNotification(
-            response.message || 'Producto creado exitosamente',
-            'success'
-        );
+        const message = this.isEditForm 
+            ? (response.message || 'Producto actualizado exitosamente')
+            : (response.message || 'Producto creado exitosamente');
+            
+        UIHelpers.showNotification(message, 'success');
 
         // Update CSRF token if provided in response
         if (response.csrf_token) {
             this.updateCSRFToken(response.csrf_token);
         }
 
-        // Reset form
-        this.form.reset();
+        // For create forms, reset the form; for edit forms, keep the data
+        if (!this.isEditForm) {
+            this.form.reset();
+        }
+        
         this.clearErrors();
     }
 

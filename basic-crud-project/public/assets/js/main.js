@@ -11,22 +11,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (productForm) {
         new FormValidator('product-form');
         
-        // Check if this is a create form (no action with ID) for AJAX handling
-        const formAction = productForm.getAttribute('action');
-        const isCreateForm = formAction && !formAction.match(/\/\d+$/);
-        
-        if (isCreateForm) {
-            // Use AJAX for create form
-            new ProductFormHandler('product-form');
-        } else {
-            // Handle traditional form submission with loading states for edit forms
-            productForm.addEventListener('submit', function(e) {
-                const submitBtn = this.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    UIHelpers.showLoading(submitBtn);
-                }
-            });
-        }
+        // Use AJAX for both create and edit forms
+        new ProductFormHandler('product-form');
     }
     
     // Initialize search form
