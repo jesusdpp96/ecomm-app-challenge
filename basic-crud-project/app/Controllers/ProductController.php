@@ -319,6 +319,36 @@ class ProductController extends BaseController
     }
 
     /**
+     * API: Get single product
+     *
+     * @param int $id
+     * @return ResponseInterface
+     */
+    public function apiShow(int $id): ResponseInterface
+    {
+        try {
+            $product = $this->productModel->getProductById($id);
+            
+            if (!$product) {
+                $errors = ErrorHandler::handleNotFoundException('product', $id);
+                $response = ResponseFormatter::error($errors, 'Product not found', 404);
+                return $this->response->setStatusCode(404)->setJSON($response);
+            }
+
+            $productResponse = ProductResponse::fromModel($product);
+            $response = ResponseFormatter::success($productResponse->toArray(), 'Product retrieved successfully');
+
+            $this->appLogger->logOperation('api_view_product', $id);
+            
+            return $this->response->setJSON($response);
+        } catch (\Exception $e) {
+            $errors = ErrorHandler::handleGenericError($e);
+            $response = ResponseFormatter::error($errors, 'Failed to retrieve product', 500);
+            return $this->response->setStatusCode(500)->setJSON($response);
+        }
+    }
+
+    /**
      * API: Search products
      *
      * @return ResponseInterface

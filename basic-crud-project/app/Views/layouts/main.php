@@ -17,7 +17,6 @@
                 <div class="navbar-nav">
                     <a href="<?= base_url('/') ?>" class="nav-link">Productos</a>
                     <?php if (session()->get('is_logged_in')): ?>
-                        <a href="<?= base_url('products/create') ?>" class="nav-link">Crear Producto</a>
                         <div class="user-menu">
                             <span class="nav-link user-info">Hola, <?= esc(session()->get('username')) ?></span>
                             <button onclick="confirmLogout()" class="btn btn-secondary btn-sm">Cerrar Sesión</button>
