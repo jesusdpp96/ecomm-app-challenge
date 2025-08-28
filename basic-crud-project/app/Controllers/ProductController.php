@@ -20,13 +20,17 @@ class ProductController extends BaseController
 {
     protected ProductModel $productModel;
     protected DataSanitizer $sanitizer;
-    protected AppLogger $logger;
+    protected AppLogger $appLogger;
+
+    protected const DEFAULT_PAGE = 1;
+    protected const DEFAULT_PER_PAGE = 7;
+    
 
     public function __construct()
     {
         $this->productModel = new ProductModel();
         $this->sanitizer = new DataSanitizer();
-        $this->logger = new AppLogger('ProductController');
+        $this->appLogger = new AppLogger('ProductController');
     }
 
     // ==================== VIEW METHODS ====================
@@ -39,8 +43,8 @@ class ProductController extends BaseController
     public function index(): string
     {
         try {
-            $page = (int)($this->request->getGet('page') ?? 1);
-            $perPage = (int)($this->request->getGet('per_page') ?? 10);
+            $page = (int)($this->request->getGet('page') ?? self::DEFAULT_PAGE);
+            $perPage = (int)($this->request->getGet('per_page') ?? self::DEFAULT_PER_PAGE);
             $filters = $this->getFiltersFromRequest();
 
             $result = $this->productModel->getAllProducts($filters, $page, $perPage);
@@ -51,11 +55,11 @@ class ProductController extends BaseController
                 'filters' => $filters
             ];
 
-            $this->logger->logOperation('view_products_list', null, ['page' => $page, 'per_page' => $perPage]);
+            $this->appLogger->logOperation('view_products_list', null, ['page' => $page, 'per_page' => $perPage]);
 
             return view('products/index', $data);
         } catch (\Exception $e) {
-            $this->logger->logError('Error loading products index: ' . $e->getMessage());
+            $this->appLogger->logError('Error loading products index: ' . $e->getMessage());
             return view('errors/500');
         }
     }
@@ -88,7 +92,7 @@ class ProductController extends BaseController
             $data = ['product' => $product];
             return view('products/edit', $data);
         } catch (\Exception $e) {
-            $this->logger->logError('Error loading product edit form: ' . $e->getMessage(), ['product_id' => $id]);
+            $this->appLogger->logError('Error loading product edit form: ' . $e->getMessage(), ['product_id' => $id]);
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
     }
@@ -108,12 +112,12 @@ class ProductController extends BaseController
                 throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
             }
 
-            $this->logger->logOperation('view_product', $id);
+            $this->appLogger->logOperation('view_product', $id);
             
             $data = ['product' => $product];
             return view('products/show', $data);
         } catch (\Exception $e) {
-            $this->logger->logError('Error loading product view: ' . $e->getMessage(), ['product_id' => $id]);
+            $this->appLogger->logError('Error loading product view: ' . $e->getMessage(), ['product_id' => $id]);
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
     }
@@ -144,7 +148,7 @@ class ProductController extends BaseController
                 $perPage
             );
 
-            $this->logger->logOperation('api_list_products', null, ['page' => $page, 'per_page' => $perPage]);
+            $this->appLogger->logOperation('api_list_products', null, ['page' => $page, 'per_page' => $perPage]);
 
             return $this->response->setJSON($response);
         } catch (\Exception $e) {
@@ -199,7 +203,7 @@ class ProductController extends BaseController
             $productResponse = ProductResponse::fromModel($product);
             $response = ResponseFormatter::created($productResponse->toArray(), 'Product created successfully');
 
-            $this->logger->logOperation('create_product', $product->id, $sanitizedData);
+            $this->appLogger->logOperation('create_product', $product->id, $sanitizedData);
 
             return $this->response->setStatusCode(201)->setJSON($response);
         } catch (ValidationException $e) {
@@ -266,7 +270,7 @@ class ProductController extends BaseController
             $productResponse = ProductResponse::fromModel($product);
             $response = ResponseFormatter::updated($productResponse->toArray(), 'Product updated successfully');
 
-            $this->logger->logOperation('update_product', $id, $sanitizedData);
+            $this->appLogger->logOperation('update_product', $id, $sanitizedData);
 
             return $this->response->setJSON($response);
         } catch (ValidationException $e) {
@@ -314,7 +318,7 @@ class ProductController extends BaseController
 
             $response = ResponseFormatter::deleted('Product deleted successfully');
 
-            $this->logger->logOperation('delete_product', $id);
+            $this->appLogger->logOperation('delete_product', $id);
 
             return $this->response->setJSON($response);
         } catch (\Exception $e) {
@@ -340,7 +344,7 @@ class ProductController extends BaseController
 
             $response = ResponseFormatter::success($formattedProducts, 'Search completed');
 
-            $this->logger->logOperation('search_products', null, ['query' => $query, 'results_count' => count($products)]);
+            $this->appLogger->logOperation('search_products', null, ['query' => $query, 'results_count' => count($products)]);
 
             return $this->response->setJSON($response);
         } catch (\Exception $e) {
@@ -399,7 +403,7 @@ class ProductController extends BaseController
      */
     private function logOperation(string $action, ?int $productId = null): void
     {
-        $this->logger->logOperation($action, $productId);
+        $this->appLogger->logOperation($action, $productId);
     }
 
     /**
