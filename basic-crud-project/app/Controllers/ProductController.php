@@ -165,6 +165,10 @@ class ProductController extends BaseController
      */
     public function store(): ResponseInterface
     {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403, 'Forbidden');
+        }
+
         try {
             $isLoggedIn = session()->get('is_logged_in');
 
@@ -229,6 +233,9 @@ class ProductController extends BaseController
      */
     public function update(int $id): ResponseInterface
     {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403, 'Forbidden');
+        }
         try {
             // Check if product exists
             if (!$this->productModel->productExists($id)) {
@@ -289,6 +296,10 @@ class ProductController extends BaseController
      */
     public function delete(int $id): ResponseInterface
     {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403, 'Forbidden');
+        }
+        
         try {
             // Check if product exists
             if (!$this->productModel->productExists($id)) {
@@ -326,6 +337,10 @@ class ProductController extends BaseController
      */
     public function apiShow(int $id): ResponseInterface
     {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403, 'Forbidden');
+        }
+        
         try {
             $product = $this->productModel->getProductById($id);
             
@@ -355,6 +370,10 @@ class ProductController extends BaseController
      */
     public function search(): ResponseInterface
     {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(403, 'Forbidden');
+        }
+        
         try {
             $query = $this->request->getGet('q') ?? '';
             $query = $this->sanitizer->sanitizeString($query);

@@ -38,6 +38,10 @@
     </footer>
     
     <?= $this->include('components/confirmation-modal') ?>
+    <script src="<?= base_url('assets/js/classes/ui-helpers.js') ?>"></script>
+    <script src="<?= base_url('assets/js/classes/form-validator.js') ?>"></script>
+    <script src="<?= base_url('assets/js/classes/table-sorter.js') ?>"></script>
+    <script src="<?= base_url('assets/js/classes/product-form-handler.js') ?>"></script>
     <script src="<?= base_url('assets/js/main.js') ?>"></script>
     <script src="<?= base_url('assets/js/actions/confirm-logout.js') ?>"></script>
     <?= $this->renderSection('scripts') ?>

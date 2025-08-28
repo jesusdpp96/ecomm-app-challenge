@@ -9,7 +9,7 @@
         </a>
     </div>
     
-    <form id="product-form" class="product-form" action="<?= base_url('products') ?>" method="POST" novalidate>
+    <form id="product-form" class="product-form" action="<?= base_url('products') ?>" method="POST" novalidate data-ajax="true">
         <?= csrf_field() ?>
         
         <div class="form-group">

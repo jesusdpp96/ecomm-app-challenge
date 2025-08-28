@@ -6,18 +6,27 @@ document.addEventListener('DOMContentLoaded', function() {
         new TableSorter('products-table');
     }
     
-    // Initialize form validation
+    // Initialize form validation and AJAX handling
     const productForm = document.getElementById('product-form');
     if (productForm) {
         new FormValidator('product-form');
         
-        // Handle form submission with loading states
-        productForm.addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                UIHelpers.showLoading(submitBtn);
-            }
-        });
+        // Check if this is a create form (no action with ID) for AJAX handling
+        const formAction = productForm.getAttribute('action');
+        const isCreateForm = formAction && !formAction.match(/\/\d+$/);
+        
+        if (isCreateForm) {
+            // Use AJAX for create form
+            new ProductFormHandler('product-form');
+        } else {
+            // Handle traditional form submission with loading states for edit forms
+            productForm.addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    UIHelpers.showLoading(submitBtn);
+                }
+            });
+        }
     }
     
     // Initialize search form
