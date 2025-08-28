@@ -43,7 +43,9 @@
     <script src="<?= base_url('assets/js/classes/table-sorter.js') ?>"></script>
     <script src="<?= base_url('assets/js/classes/product-form-handler.js') ?>"></script>
     <script src="<?= base_url('assets/js/main.js') ?>"></script>
+    <script src="<?= base_url('assets/js/actions/delete-product.js') ?>"></script>
     <script src="<?= base_url('assets/js/actions/confirm-logout.js') ?>"></script>
+    <script src="<?= base_url('assets/js/utils/get-csrf-token-from-form.js') ?>"></script>
     <?= $this->renderSection('scripts') ?>
 </body>
 </html>

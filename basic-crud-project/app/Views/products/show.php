@@ -8,9 +8,11 @@
             <a href="<?= base_url('/') ?>" class="btn btn-secondary">
                 ← Volver a la lista
             </a>
-            <a href="<?= base_url('products/' . $product->id . '/edit') ?>" class="btn btn-primary">
-                Editar Producto
-            </a>
+            <?php if (session()->get('is_logged_in')): ?>
+                <a href="<?= base_url('products/' . $product->id . '/edit') ?>" class="btn btn-primary">
+                    Editar Producto
+                </a>
+            <?php endif; ?>
         </div>
     </div>
     
@@ -35,12 +37,6 @@
                 <label>Fecha de Creación:</label>
                 <span><?= $product->getFormattedDate('d/m/Y H:i:s') ?></span>
             </div>
-        </div>
-        
-        <div class="product-actions">
-            <button type="button" class="btn btn-danger" onclick="deleteProduct(<?= $product->id ?>)">
-                Eliminar Producto
-            </button>
         </div>
     </div>
 </div>

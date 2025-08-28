@@ -56,29 +56,7 @@ class ProductFormHandler {
         }
         
         // Extract CSRF token fields - CodeIgniter uses dynamic field names
-        let csrfTokenName = null;
-        let csrfTokenValue = null;
-        
-        // Find the actual CSRF field name (it's dynamic in CodeIgniter)
-        for (let [key, value] of formData.entries()) {
-            if (key.includes('csrf') && key.includes('name')) {
-                // This is likely the CSRF token field name
-                csrfTokenName = key;
-                csrfTokenValue = value;
-                break;
-            }
-        }
-        
-        // If not found in FormData, try DOM directly
-        if (!csrfTokenName || !csrfTokenValue) {
-            const csrfInputs = this.form.querySelectorAll('input[type="hidden"]');
-            csrfInputs.forEach(input => {
-                if (input.name.includes('csrf') && input.name.includes('name')) {
-                    csrfTokenName = input.name;
-                    csrfTokenValue = input.value;
-                }
-            });
-        }
+        const csrfData = getCSRFTokenFromForm();
                 
         const data = {
             title: formData.get('title')?.trim(),
@@ -86,8 +64,8 @@ class ProductFormHandler {
         };
         
         // Add CSRF tokens if they exist
-        if (csrfTokenName && csrfTokenValue) {
-            data[csrfTokenName] = csrfTokenValue;
+        if (csrfData.name && csrfData.value) {
+            data[csrfData.name] = csrfData.value;
         } else {
             console.error('CSRF tokens not found in form data');
         }

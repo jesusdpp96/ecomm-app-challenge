@@ -7,13 +7,24 @@ async function deleteProduct(productId) {
   if (!confirmed) return;
   
   try {
-      const response = await fetch(`/products/${productId}`, {
+      // Get CSRF token using the same logic as ProductFormHandler
+      const csrfData = getCSRFTokenFromForm();
+      
+      // Prepare request body with CSRF token (like in submitProduct)
+      const requestData = {};
+      
+      // Add CSRF token to request body if found
+      if (csrfData.name && csrfData.value) {
+          requestData[csrfData.name] = csrfData.value;
+      }
+      
+      const response = await fetch(`/api/products/${productId}`, {
           method: 'DELETE',
           headers: {
               'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-          }
+              'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify(requestData)
       });
       
       if (response.ok) {

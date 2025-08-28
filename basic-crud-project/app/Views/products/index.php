@@ -5,9 +5,11 @@
     <!-- Header con botón de crear -->
     <div class="products-header">
         <h1>Gestión de Productos</h1>
-        <a href="<?= base_url('products/create') ?>" class="btn btn-primary">
-            Crear Producto
-        </a>
+        <?php if (session()->get('is_logged_in')): ?>
+            <a href="<?= base_url('products/create') ?>" class="btn btn-primary">
+                Crear Producto
+            </a>
+        <?php endif; ?>
     </div>
     
     <!-- Filtros de búsqueda -->
@@ -47,8 +49,9 @@
                             <td><?= $product->getFormattedDate('d/m/Y H:i') ?></td>
                             <td>
                                 <a href="<?= base_url('products/' . $product->id) ?>" class="btn btn-info btn-sm">Ver</a>
-                                <a href="<?= base_url('products/' . $product->id . '/edit') ?>" class="btn btn-primary btn-sm">Editar</a>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteProduct(<?= $product->id ?>)">Eliminar</button>
+                                <?php if (session()->get('is_logged_in')): ?>
+                                    <a href="<?= base_url('products/' . $product->id . '/edit') ?>" class="btn btn-primary btn-sm">Editar</a>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
