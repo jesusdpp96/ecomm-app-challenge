@@ -166,15 +166,15 @@ class ProductController extends BaseController
     public function store(): ResponseInterface
     {
         try {
-            // Validate CSRF token
-            if (!$this->validateCSRF()) {
-                $errors = [['field' => 'csrf', 'message' => 'Invalid CSRF token', 'type' => 'security']];
-                $response = ResponseFormatter::error($errors, 'Security validation failed', 403);
-                return $this->response->setStatusCode(403)->setJSON($response);
-            }
-
             // Get and sanitize input data
-            $rawData = $this->request->getJSON(true) ?? $this->request->getPost();
+            $contentType = $this->request->getHeaderLine('Content-Type');
+            if (strpos($contentType, 'application/json') !== false) {
+                $rawData = $this->request->getJSON(true);
+            } else {
+                $rawData = $this->request->getPost();
+            }
+            $this->appLogger->logDebug('Raw data received in store()', is_array($rawData) ? $rawData : []);
+
             $sanitizedData = $this->sanitizer->sanitizeArray($rawData, [
                 'title' => 'string',
                 'price' => 'numeric'
@@ -226,13 +226,6 @@ class ProductController extends BaseController
     public function update(int $id): ResponseInterface
     {
         try {
-            // Validate CSRF token
-            if (!$this->validateCSRF()) {
-                $errors = [['field' => 'csrf', 'message' => 'Invalid CSRF token', 'type' => 'security']];
-                $response = ResponseFormatter::error($errors, 'Security validation failed', 403);
-                return $this->response->setStatusCode(403)->setJSON($response);
-            }
-
             // Check if product exists
             if (!$this->productModel->productExists($id)) {
                 $errors = ErrorHandler::handleNotFoundException('product', $id);
@@ -293,13 +286,6 @@ class ProductController extends BaseController
     public function delete(int $id): ResponseInterface
     {
         try {
-            // Validate CSRF token
-            if (!$this->validateCSRF()) {
-                $errors = [['field' => 'csrf', 'message' => 'Invalid CSRF token', 'type' => 'security']];
-                $response = ResponseFormatter::error($errors, 'Security validation failed', 403);
-                return $this->response->setStatusCode(403)->setJSON($response);
-            }
-
             // Check if product exists
             if (!$this->productModel->productExists($id)) {
                 $errors = ErrorHandler::handleNotFoundException('product', $id);
@@ -440,24 +426,9 @@ class ProductController extends BaseController
 
         // Sorting
         $filters['sort_by'] = $this->sanitizer->sanitizeString($this->request->getGet('sort_by') ?? 'id');
-        $filters['order'] = $this->sanitizer->sanitizeString($this->request->getGet('order') ?? 'asc');
+        $filters['order'] = $this->sanitizer->sanitizeString($this->request->getGet('order') ?? 'desc');
 
         return $filters;
     }
 
-    /**
-     * Validate CSRF token
-     *
-     * @return bool
-     */
-    private function validateCSRF(): bool
-    {
-        // Skip CSRF validation for API requests in development
-        if (ENVIRONMENT === 'development' && $this->request->is('json')) {
-            return true;
-        }
-
-        return $this->request->getMethod() === 'get' || 
-               hash_equals(csrf_hash(), $this->request->getPost('csrf_token') ?? '');
-    }
 }
