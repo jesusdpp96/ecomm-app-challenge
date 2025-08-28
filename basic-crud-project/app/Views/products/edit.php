@@ -69,3 +69,8 @@
     </form>
 </div>
 <?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script src="<?= base_url('assets/js/actions/delete-product.js') ?>"></script>
+<script src="<?= base_url('assets/js/classes/ui-helpers.js') ?>"></script>
+<?= $this->endSection() ?>
