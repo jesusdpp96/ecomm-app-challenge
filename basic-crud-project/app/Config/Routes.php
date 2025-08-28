@@ -17,6 +17,11 @@ $routes->get('products/(:num)/edit', 'ProductController::edit/$1');
 $routes->post('products/(:num)', 'ProductController::update/$1');
 $routes->delete('products/(:num)', 'ProductController::delete/$1');
 
+// Login routes
+$routes->get('login', 'LoginController::index');
+$routes->post('login', 'LoginController::login');
+$routes->get('logout', 'LoginController::logout');
+
 // API routes
 $routes->group('api', function($routes) {
     $routes->get('products', 'ProductController::apiIndex');

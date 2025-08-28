@@ -1,8 +1,3 @@
-require('./actions/delete-product');
-require('./classes/form-validator');
-require('./classes/table-sorter');
-require('./classes/ui-helpers');
-
 // Initialize UI components when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize table sorting

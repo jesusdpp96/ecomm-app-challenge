@@ -16,8 +16,15 @@
                 </div>
                 <div class="navbar-nav">
                     <a href="<?= base_url('/') ?>" class="nav-link">Productos</a>
-                    <a href="<?= base_url('products/create') ?>" class="nav-link">Crear Producto</a>
-                </div>
+                    <?php if (session()->get('is_logged_in')): ?>
+                        <a href="<?= base_url('products/create') ?>" class="nav-link">Crear Producto</a>
+                        <div class="user-menu">
+                            <span class="nav-link user-info">Hola, <?= esc(session()->get('username')) ?></span>
+                            <button onclick="confirmLogout()" class="btn btn-secondary btn-sm">Cerrar Sesión</button>
+                        </div>
+                    <?php else: ?>
+                        <a href="<?= base_url('login') ?>" class="nav-link">Iniciar Sesión</a>
+                    <?php endif; ?>
             </nav>
         </div>
     </header>
@@ -33,6 +40,7 @@
     
     <?= $this->include('components/confirmation-modal') ?>
     <script src="<?= base_url('assets/js/main.js') ?>"></script>
+    <script src="<?= base_url('assets/js/actions/confirm-logout.js') ?>"></script>
     <?= $this->renderSection('scripts') ?>
 </body>
 </html>

@@ -588,6 +588,12 @@ label {
         justify-content: center;
     }
     
+    .user-menu {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+    
     .form-actions {
         flex-direction: column;
     }
@@ -611,6 +617,36 @@ label {
         padding: var(--spacing-xs);
         font-size: 0.75rem;
     }
+}
+
+/* ===== USER MENU ===== */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.user-info {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* ===== LOGIN FORM SPECIFIC ===== */
+.login-form .form-info {
+    background: var(--bg-secondary);
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin: var(--spacing-lg) 0;
+}
+
+.login-form .form-info code {
+    background: var(--primary-color);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
 }
 
 /* ===== UTILITY CLASSES ===== */

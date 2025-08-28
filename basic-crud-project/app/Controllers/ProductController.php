@@ -166,6 +166,10 @@ class ProductController extends BaseController
     public function store(): ResponseInterface
     {
         try {
+            $isLoggedIn = session()->get('is_logged_in');
+
+            log_message('debug', 'User is logged in: ' . ($isLoggedIn ? 'Yes' : 'No'));
+            
             // Get and sanitize input data
             $contentType = $this->request->getHeaderLine('Content-Type');
             if (strpos($contentType, 'application/json') !== false) {
