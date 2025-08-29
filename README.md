@@ -125,7 +125,7 @@ basic-crud-project/
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/jesusdpp96/ecomm-app-challenge.git
    cd challege-ecomm-app
    ```
 
