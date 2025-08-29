@@ -44,8 +44,35 @@
         
         <div class="form-info">
             <p><strong>Credenciales de prueba:</strong></p>
-            <p>Usuario: <code>admin</code></p>
-            <p>Contraseña: <code>admin123</code></p>
+            <div class="credentials-grid">
+                <div class="credential-card">
+                    <h4>👨‍💼 Administrador</h4>
+                    <p><strong>Usuario:</strong> <code>carlos</code></p>
+                    <p><strong>Contraseña:</strong> <code>admin123</code></p>
+                    <div class="role-permissions">
+                        <p><strong>Permisos:</strong></p>
+                        <ul>
+                            <li>✅ Crear productos</li>
+                            <li>✅ Actualizar productos</li>
+                            <li>✅ Eliminar productos</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="credential-card">
+                    <h4>👤 Usuario Regular</h4>
+                    <p><strong>Usuario:</strong> <code>maria</code></p>
+                    <p><strong>Contraseña:</strong> <code>user123</code></p>
+                    <div class="role-permissions">
+                        <p><strong>Permisos:</strong></p>
+                        <ul>
+                            <li>✅ Crear productos</li>
+                            <li>✅ Actualizar productos</li>
+                            <li>❌ Eliminar productos</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="form-actions">

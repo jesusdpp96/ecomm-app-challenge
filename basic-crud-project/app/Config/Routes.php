@@ -41,10 +41,14 @@ $routes->group('api', ['filter' => 'auth'], function($routes) {
     // Product CRUD operations (JSON only)
     $routes->post('products', 'ProductController::store');
     $routes->put('products/(:num)', 'ProductController::update/$1');
-    $routes->delete('products/(:num)', 'ProductController::delete/$1');
     
     // Additional API endpoints
     $routes->get('products', 'ProductController::apiIndex');
     $routes->get('products/(:num)', 'ProductController::apiShow/$1');
     $routes->get('products/search', 'ProductController::search');
 });
+
+// =============================================================================
+// PROTECTED ROUTES - Admin authentication required
+// =============================================================================
+$routes->delete('api/products/(:num)', 'ProductController::delete/$1', ['filter' => 'admin']);

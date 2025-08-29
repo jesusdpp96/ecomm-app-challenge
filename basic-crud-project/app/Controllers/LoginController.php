@@ -17,10 +17,21 @@ class LoginController extends BaseController
      * Hardcoded user data for testing purposes
      * In production, this would come from a UserModel and database
      */
-    private const HARDCODED_USER = [
-        'id' => 1,
-        'username' => 'admin',
-        'password' => 'admin123' // In production, this would be hashed
+    private const HARDCODED_USERS = [
+        [
+            'id' => 1,
+            'username' => 'carlos',
+            'password' => 'admin123',
+            'name' => 'Carlos Rodríguez',
+            'role' => 'admin'
+        ],
+        [
+            'id' => 2,
+            'username' => 'maria',
+            'password' => 'user123',
+            'name' => 'María González',
+            'role' => 'user'
+        ]
     ];
 
     /**
@@ -59,12 +70,13 @@ class LoginController extends BaseController
             return redirect()->back()->withInput();
         }
 
-        // Check credentials against hardcoded user
-        if ($this->validateCredentials($username, $password)) {
+        // Check credentials against hardcoded users
+        $user = $this->validateCredentials($username, $password);
+        if ($user) {
             // Set session data for logged in user
-            $this->setUserSession(self::HARDCODED_USER);
+            $this->setUserSession($user);
             
-            session()->setFlashdata('success', '¡Bienvenido! Has iniciado sesión correctamente.');
+            session()->setFlashdata('success', "¡Bienvenido {$user['name']}! Has iniciado sesión correctamente.");
             return redirect()->to('/');
         } else {
             session()->setFlashdata('error', 'Credenciales incorrectas. Por favor, intente nuevamente.');
@@ -94,12 +106,16 @@ class LoginController extends BaseController
      *
      * @param string $username
      * @param string $password
-     * @return bool
+     * @return array|null
      */
-    private function validateCredentials(string $username, string $password): bool
+    private function validateCredentials(string $username, string $password): ?array
     {
-        return $username === self::HARDCODED_USER['username'] && 
-               $password === self::HARDCODED_USER['password'];
+        foreach (self::HARDCODED_USERS as $user) {
+            if ($user['username'] === $username && $user['password'] === $password) {
+                return $user;
+            }
+        }
+        return null;
     }
 
     /**
@@ -113,6 +129,8 @@ class LoginController extends BaseController
         $sessionData = [
             'user_id' => $user['id'],
             'username' => $user['username'],
+            'name' => $user['name'],
+            'role' => $user['role'],
             'is_logged_in' => true,
             'login_time' => time()
         ];
@@ -127,7 +145,7 @@ class LoginController extends BaseController
      */
     private function clearUserSession(): void
     {
-        session()->remove(['user_id', 'username', 'is_logged_in', 'login_time']);
+        session()->remove(['user_id', 'username', 'name', 'role', 'is_logged_in', 'login_time']);
     }
 
     /**
@@ -141,32 +159,12 @@ class LoginController extends BaseController
     }
 
     /**
-     * Get current logged in user data
-     *
-     * @return array|null
-     */
-    public function getCurrentUser(): ?array
-    {
-        if (!$this->isLoggedIn()) {
-            return null;
-        }
-
-        return [
-            'id' => session()->get('user_id'),
-            'username' => session()->get('username'),
-            'login_time' => session()->get('login_time')
-        ];
-    }
-
-    /**
-     * Middleware method to check authentication for protected routes
-     * This can be used in other controllers to protect API endpoints
+     * Check if user is admin
      *
      * @return bool
      */
-    public static function requireAuth(): bool
+    public function isAdmin(): bool
     {
-        $session = session();
-        return $session->get('is_logged_in') === true;
+        return $this->isLoggedIn() && session()->get('role') === 'admin';
     }
 }

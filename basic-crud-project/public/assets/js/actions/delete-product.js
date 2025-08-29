@@ -38,6 +38,5 @@ async function deleteProduct(productId) {
       }
   } catch (error) {
       UIHelpers.showNotification('Error al eliminar el producto', 'error');
-      console.error('Delete error:', error);
   }
 }

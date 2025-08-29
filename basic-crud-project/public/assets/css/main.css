@@ -660,6 +660,65 @@ label {
     font-size: 0.875rem;
 }
 
+.credentials-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+}
+
+.credential-card {
+    background: var(--bg-primary);
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.credential-card h4 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.credential-card p {
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.875rem;
+}
+
+.role-permissions {
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid #e2e8f0;
+}
+
+.role-permissions p {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+}
+
+.role-permissions ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.role-permissions li {
+    font-size: 0.8rem;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-secondary);
+}
+
+/* Responsive design for credentials grid */
+@media (max-width: 768px) {
+    .credentials-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+    }
+}
+
 /* ===== UTILITY CLASSES ===== */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
