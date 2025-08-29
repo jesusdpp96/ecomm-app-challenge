@@ -6,6 +6,8 @@ use CodeIgniter\Model;
 use App\Libraries\JSONStorage;
 use App\Entities\Product;
 use App\Exceptions\StorageException;
+use App\Exceptions\ProductNotFoundException;
+use App\Exceptions\ProductStorageException;
 use Config\Storage as StorageConfig;
 use Respect\Validation\Exceptions\ValidationException;
 use App\Libraries\AppLogger;

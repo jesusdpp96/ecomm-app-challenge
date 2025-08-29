@@ -9,6 +9,10 @@ use App\Libraries\ResponseFormatter;
 use App\Libraries\ErrorHandler;
 use App\Libraries\DTOs\ProductResponse;
 use App\Entities\Product;
+use App\Exceptions\ProductNotFoundException;
+use App\Exceptions\ProductValidationException;
+use App\Exceptions\ProductStorageException;
+use App\Traits\ErrorHandlingTrait;
 use Respect\Validation\Exceptions\ValidationException;
 
 /**
@@ -16,6 +20,8 @@ use Respect\Validation\Exceptions\ValidationException;
  */
 class ProductController extends BaseController
 {
+    use ErrorHandlingTrait;
+    
     protected ProductModel $productModel;
     protected AppLogger $appLogger;
 
@@ -55,8 +61,9 @@ class ProductController extends BaseController
 
             return view('products/index', $data);
         } catch (\Exception $e) {
+            $errors = ErrorHandler::handleGenericError($e);
             $this->appLogger->logError('Error loading products index: ' . $e->getMessage());
-            return view('errors/500');
+            return view('errors/500', ['errors' => $errors]);
         }
     }
 
@@ -82,11 +89,13 @@ class ProductController extends BaseController
             $product = $this->productModel->getProductById($id);
             
             if (!$product) {
-                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+                throw new ProductNotFoundException($id);
             }
 
             $data = ['product' => $product];
             return view('products/edit', $data);
+        } catch (ProductNotFoundException $e) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         } catch (\Exception $e) {
             $this->appLogger->logError('Error loading product edit form: ' . $e->getMessage(), ['product_id' => $id]);
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
@@ -105,13 +114,15 @@ class ProductController extends BaseController
             $product = $this->productModel->getProductById($id);
             
             if (!$product) {
-                throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+                throw new ProductNotFoundException($id);
             }
 
             $this->appLogger->logOperation('view_product', $id);
             
             $data = ['product' => $product];
             return view('products/show', $data);
+        } catch (ProductNotFoundException $e) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         } catch (\Exception $e) {
             $this->appLogger->logError('Error loading product view: ' . $e->getMessage(), ['product_id' => $id]);
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
@@ -167,7 +178,7 @@ class ProductController extends BaseController
             return $this->response->setStatusCode(403, 'Forbidden');
         }
 
-        try {
+        return $this->executeWithErrorHandling(function() {
             $isLoggedIn = session()->get('is_logged_in');
 
             log_message('debug', 'User is logged in: ' . ($isLoggedIn ? 'Yes' : 'No'));
@@ -176,22 +187,21 @@ class ProductController extends BaseController
 
             $this->appLogger->logDebug('Raw data received in store()', is_array($rawData) ? $rawData : []);
 
+            # Placeholder for next id
+            $rawData['id'] = 1;
+            
             // Validate raw input using Product Entity
             $validationErrors = Product::validateRawInput($rawData);
 
             if (!empty($validationErrors)) {
-                $errors = ErrorHandler::handleValidationErrors($validationErrors);
-                $response = ResponseFormatter::error($errors, 'Validation failed', 400);
-                return $this->response->setStatusCode(400)->setJSON($response);
+                throw new ProductValidationException($validationErrors);
             }
 
             // Create product using sanitized data from Entity
             $product = $this->productModel->createProduct($rawData);
 
             if (!$product) {
-                $errors = [['field' => 'product', 'message' => 'Failed to create product', 'type' => 'creation_error']];
-                $response = ResponseFormatter::error($errors, 'Product creation failed', 500);
-                return $this->response->setStatusCode(500)->setJSON($response);
+                throw new ProductStorageException('create');
             }
 
             // Format response
@@ -204,15 +214,7 @@ class ProductController extends BaseController
             $this->appLogger->logOperation('create_product', $product->id, $rawData);
 
             return $this->response->setStatusCode(201)->setJSON($response);
-        } catch (ValidationException $e) {
-            $errors = ErrorHandler::handleValidationErrors(['validation' => $e->getMessage()]);
-            $response = ResponseFormatter::error($errors, 'Validation failed', 400);
-            return $this->response->setStatusCode(400)->setJSON($response);
-        } catch (\Exception $e) {
-            $errors = ErrorHandler::handleGenericError($e);
-            $response = ResponseFormatter::error($errors, 'Failed to create product', 500);
-            return $this->response->setStatusCode(500)->setJSON($response);
-        }
+        }, 'No se pudo crear el producto');
     }
 
     /**
@@ -226,33 +228,29 @@ class ProductController extends BaseController
         if (!$this->request->isAJAX()) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
-        try {
+        
+        return $this->executeWithErrorHandling(function() use ($id) {
             // Check if product exists
             if (!$this->productModel->productExists($id)) {
-                $errors = ErrorHandler::handleNotFoundException('product', $id);
-                $response = ResponseFormatter::error($errors, 'Product not found', 404);
-                return $this->response->setStatusCode(404)->setJSON($response);
+                throw new ProductNotFoundException($id);
             }
 
             // Get and validate raw input data
             $rawData = $this->request->getPost();
 
+            $rawData['id'] = $id;
             // Validate raw input using Product Entity
             $validationErrors = Product::validateRawInput($rawData);
 
             if (!empty($validationErrors)) {
-                $errors = ErrorHandler::handleValidationErrors($validationErrors);
-                $response = ResponseFormatter::error($errors, 'Validation failed', 400);
-                return $this->response->setStatusCode(400)->setJSON($response);
+                throw new ProductValidationException($validationErrors);
             }
 
             // Update product using sanitized data from Entity
             $product = $this->productModel->updateProduct($id, $rawData);
 
             if (!$product) {
-                $errors = [['field' => 'product', 'message' => 'Failed to update product', 'type' => 'update_error']];
-                $response = ResponseFormatter::error($errors, 'Product update failed', 500);
-                return $this->response->setStatusCode(500)->setJSON($response);
+                throw new ProductStorageException('update', $id);
             }
 
             // Format response
@@ -265,15 +263,7 @@ class ProductController extends BaseController
             $this->appLogger->logOperation('update_product', $id, $rawData);
 
             return $this->response->setJSON($response);
-        } catch (ValidationException $e) {
-            $errors = ErrorHandler::handleValidationErrors(['validation' => $e->getMessage()]);
-            $response = ResponseFormatter::error($errors, 'Validation failed', 400);
-            return $this->response->setStatusCode(400)->setJSON($response);
-        } catch (\Exception $e) {
-            $errors = ErrorHandler::handleGenericError($e);
-            $response = ResponseFormatter::error($errors, 'Failed to update product', 500);
-            return $this->response->setStatusCode(500)->setJSON($response);
-        }
+        }, 'No se pudo actualizar el producto');
     }
 
     /**
@@ -288,21 +278,17 @@ class ProductController extends BaseController
             return $this->response->setStatusCode(403, 'Forbidden');
         }
         
-        try {
+        return $this->executeWithErrorHandling(function() use ($id) {
             // Check if product exists
             if (!$this->productModel->productExists($id)) {
-                $errors = ErrorHandler::handleNotFoundException('product', $id);
-                $response = ResponseFormatter::error($errors, 'Product not found', 404);
-                return $this->response->setStatusCode(404)->setJSON($response);
+                throw new ProductNotFoundException($id);
             }
 
             // Delete product
             $deleted = $this->productModel->deleteProduct($id);
 
             if (!$deleted) {
-                $errors = [['field' => 'product', 'message' => 'Failed to delete product', 'type' => 'deletion_error']];
-                $response = ResponseFormatter::error($errors, 'Product deletion failed', 500);
-                return $this->response->setStatusCode(500)->setJSON($response);
+                throw new ProductStorageException('delete', $id);
             }
 
             $response = ResponseFormatter::deleted('Product deleted successfully');
@@ -310,11 +296,7 @@ class ProductController extends BaseController
             $this->appLogger->logOperation('delete_product', $id);
 
             return $this->response->setJSON($response);
-        } catch (\Exception $e) {
-            $errors = ErrorHandler::handleGenericError($e);
-            $response = ResponseFormatter::error($errors, 'Failed to delete product', 500);
-            return $this->response->setStatusCode(500)->setJSON($response);
-        }
+        }, 'No se pudo eliminar el producto');
     }
 
     /**
@@ -329,13 +311,11 @@ class ProductController extends BaseController
             return $this->response->setStatusCode(403, 'Forbidden');
         }
         
-        try {
+        return $this->executeWithErrorHandling(function() use ($id) {
             $product = $this->productModel->getProductById($id);
             
             if (!$product) {
-                $errors = ErrorHandler::handleNotFoundException('product', $id);
-                $response = ResponseFormatter::error($errors, 'Product not found', 404);
-                return $this->response->setStatusCode(404)->setJSON($response);
+                throw new ProductNotFoundException($id);
             }
 
             $productResponse = ProductResponse::fromModel($product);
@@ -344,11 +324,7 @@ class ProductController extends BaseController
             $this->appLogger->logOperation('api_view_product', $id);
             
             return $this->response->setJSON($response);
-        } catch (\Exception $e) {
-            $errors = ErrorHandler::handleGenericError($e);
-            $response = ResponseFormatter::error($errors, 'Failed to retrieve product', 500);
-            return $this->response->setStatusCode(500)->setJSON($response);
-        }
+        }, 'No se pudo obtener el producto');
     }
 
     /**
@@ -361,7 +337,8 @@ class ProductController extends BaseController
         if (!$this->request->isAJAX()) {
             return $this->response->setStatusCode(403, 'Forbidden');
         }
-        try {
+        
+        return $this->executeWithErrorHandling(function() {
             $query = $this->request->getGet('q') ?? '';
             $query = Product::sanitizeStringStatic($query);
 
@@ -373,59 +350,11 @@ class ProductController extends BaseController
             $this->appLogger->logOperation('search_products', null, ['query' => $query, 'results_count' => count($products)]);
 
             return $this->response->setJSON($response);
-        } catch (\Exception $e) {
-            $errors = ErrorHandler::handleGenericError($e);
-            $response = ResponseFormatter::error($errors, 'Search failed', 500);
-            return $this->response->setStatusCode(500)->setJSON($response);
-        }
+        }, 'No se pudo realizar la busqueda');
     }
 
     // ==================== HELPER METHODS ====================
 
-    /**
-     * Validate product input data using Product entity
-     *
-     * @param array $data
-     * @return array
-     */
-    private function validateProductInput(array $data): array
-    {
-        return Product::validateRawInput($data);
-    }
-
-    /**
-     * Format product response for API
-     *
-     * @param Product $product
-     * @return array
-     */
-    private function formatProductResponse(Product $product): array
-    {
-        return ProductResponse::fromModel($product)->toArray();
-    }
-
-    /**
-     * Format error response for API
-     *
-     * @param array $errors
-     * @return array
-     */
-    private function formatErrorResponse(array $errors): array
-    {
-        return ErrorHandler::handleValidationErrors($errors);
-    }
-
-    /**
-     * Log operation with context
-     *
-     * @param string $action
-     * @param int|null $productId
-     * @return void
-     */
-    private function logOperation(string $action, ?int $productId = null): void
-    {
-        $this->appLogger->logOperation($action, $productId);
-    }
 
     /**
      * Get filters from request parameters

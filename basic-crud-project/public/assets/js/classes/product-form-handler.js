@@ -119,14 +119,11 @@ class ProductFormHandler {
 
     handleErrors(response) {
         // Handle new error format { success, code, errors, message, ... }
-        
-        //     UIHelpers.showNotification(response.message, 'error');
-        UIHelpers.showNotification("Error al procesar el formulario", 'error');
+        let message = response?.message || 'Error al ejecutar la acción';
+        UIHelpers.showNotification(message, 'error');
     }
 
-    handleNetworkError(error) {
-        console.error('Network error:', error);
-        
+    handleNetworkError(error) {        
         let message = 'Error de conexión. Verifique su conexión a internet.';
         
         if (error.message.includes('autorizado')) {

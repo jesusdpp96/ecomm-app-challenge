@@ -3,26 +3,36 @@
 namespace App\Libraries;
 
 use Throwable;
+use CodeIgniter\Validation\Validation;
+use CodeIgniter\HTTP\ResponseInterface;
+use App\Exceptions\ProductNotFoundException;
+use App\Exceptions\ProductStorageException;
+use App\Exceptions\ProductValidationException;
 
 /**
- * Centralized error handling for the application
+ * Centralized error handling following CodeIgniter 4 best practices
  */
 class ErrorHandler
 {
     /**
-     * Handle validation errors
+     * Handle validation errors with CodeIgniter format compatibility
      *
      * @param array $errors
+     * @param bool $useCodeIgniterFormat
      * @return array
      */
-    public static function handleValidationErrors(array $errors): array
+    public static function handleValidationErrors(array $errors, bool $useCodeIgniterFormat = false): array
     {
+        if ($useCodeIgniterFormat) {
+            return $errors; // Return as-is for CodeIgniter compatibility
+        }
+
         $formattedErrors = [];
         
         foreach ($errors as $field => $message) {
             $formattedErrors[] = [
                 'field' => $field,
-                'message' => $message,
+                'message' => is_array($message) ? implode(', ', $message) : $message,
                 'type' => 'validation'
             ];
         }
@@ -31,18 +41,31 @@ class ErrorHandler
     }
 
     /**
+     * Handle CodeIgniter validation errors
+     *
+     * @param Validation $validation
+     * @param bool $useCodeIgniterFormat
+     * @return array
+     */
+    public static function handleCodeIgniterValidation(Validation $validation, bool $useCodeIgniterFormat = false): array
+    {
+        $errors = $validation->getErrors();
+        return self::handleValidationErrors($errors, $useCodeIgniterFormat);
+    }
+
+    /**
      * Handle not found exceptions
      *
      * @param string $entity
-     * @param int $id
+     * @param int|string $id
      * @return array
      */
-    public static function handleNotFoundException(string $entity, int $id): array
+    public static function handleNotFoundException(string $entity, $id): array
     {
         return [
             [
                 'field' => 'id',
-                'message' => ucfirst($entity) . " with ID {$id} not found",
+                'message' => ucfirst($entity) . " with ID {$id} not found 222",
                 'type' => 'not_found'
             ]
         ];
@@ -61,7 +84,7 @@ class ErrorHandler
         return [
             [
                 'field' => 'storage',
-                'message' => 'Storage operation failed',
+                'message' => self::shouldExposeError($e) ? $e->getMessage() : 'Storage operation failed',
                 'type' => 'storage_error'
             ]
         ];
@@ -88,6 +111,65 @@ class ErrorHandler
                 'type' => 'system_error'
             ]
         ];
+    }
+
+    /**
+     * Handle exceptions with proper HTTP status codes and routing
+     *
+     * @param Throwable $e
+     * @return array
+     */
+    public static function handleException(Throwable $e): array
+    {
+        $exceptionClass = get_class($e);
+        
+        // Handle custom exceptions
+        switch ($exceptionClass) {
+            case ProductNotFoundException::class:
+                /** @var ProductNotFoundException $e */
+                return self::handleNotFoundException('product', $e->getProductId());
+            
+            case ProductValidationException::class:
+                /** @var ProductValidationException $e */
+                return self::handleValidationErrors($e->getValidationErrors());
+            
+            case ProductStorageException::class:
+                return self::handleStorageError($e);
+            
+            case 'CodeIgniter\\Exceptions\\PageNotFoundException':
+                return self::handleNotFoundException('page', 'unknown');
+            
+            case 'Respect\\Validation\\Exceptions\\ValidationException':
+            case 'InvalidArgumentException':
+            case 'DomainException':
+                return self::handleValidationErrors(['validation' => $e->getMessage()]);
+            
+            default:
+                return self::handleGenericError($e);
+        }
+    }
+
+    /**
+     * Get appropriate HTTP status code from exception type
+     *
+     * @param Throwable $e
+     * @return int
+     */
+    public static function getHttpStatusFromException(Throwable $e): int
+    {
+        $exceptionMap = [
+            ProductNotFoundException::class => 404,
+            ProductValidationException::class => 400,
+            ProductStorageException::class => 500,
+            'CodeIgniter\\Exceptions\\PageNotFoundException' => 404,
+            'InvalidArgumentException' => 400,
+            'DomainException' => 400,
+            'Respect\\Validation\\Exceptions\\ValidationException' => 400,
+        ];
+
+        $exceptionClass = get_class($e);
+        
+        return $exceptionMap[$exceptionClass] ?? 500;
     }
 
     /**
