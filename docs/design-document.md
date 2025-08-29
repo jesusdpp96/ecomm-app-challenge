@@ -1,4 +1,4 @@
-# Design Document - ECOMM-APP Challenge Técnico
+# Design Document - ECOMM-APP Challenge Técnico Challenge Técnico
 
 ## 1. Resumen Ejecutivo
 
