@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= csrf_token() ?>">
-    <title><?= $title ?? 'ECOMM-APP' ?></title>
+    <title><?= $title ?? 'ECOMM-APP Challenge Técnico' ?></title>
     <link rel="stylesheet" href="<?= base_url('assets/css/main.css') ?>">
 </head>
 <body>
@@ -12,7 +12,7 @@
         <div class="main-header-content">
             <nav class="navbar">
                 <div class="navbar-brand">
-                    <a href="<?= base_url('/') ?>">ECOMM-APP</a>
+                    <a href="<?= base_url('/') ?>">ECOMM-APP Challenge Técnico</a>
                 </div>
                 <div class="navbar-nav">
                     <a href="<?= base_url('/') ?>" class="nav-link">Productos</a>
@@ -34,7 +34,7 @@
     </main>
     
     <footer class="main-footer">
-        <p>&copy; <?= date('Y') ?> ECOMM-APP. Sistema de gestión de productos.</p>
+        <p>&copy; <?= date('Y') ?> ECOMM-APP Challenge Técnico. Sistema de gestión de productos.</p>
     </footer>
     
     <?= $this->include('components/confirmation-modal') ?>
