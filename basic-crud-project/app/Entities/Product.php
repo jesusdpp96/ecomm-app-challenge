@@ -33,6 +33,7 @@ class Product extends Entity
             'id' => v::intVal()->positive(),
             'title' => v::stringType()
                         ->notEmpty()
+                        ->regex('/^[\p{L}\p{N} \-\_\.]+$/u')
                         ->length(3, 255)
                         ->setName('Title'),
             'price' => v::numericVal()
@@ -88,6 +89,54 @@ class Product extends Entity
             $data['price'] ?? 0.0,
             $data['created_at'] ?? null
         );
+    }
+
+    /**
+     * Create new instance from raw input data with sanitization
+     * This is the main method for handling user input
+     *
+     * @param array $rawData
+     * @return static
+     */
+    public static function fromRawInput(array $rawData): self
+    {
+        return new self(
+            isset($rawData['id']) ? (int)$rawData['id'] : null,
+            $rawData['title'] ?? '',
+            $rawData['price'] ?? 0.0,
+            $rawData['created_at'] ?? null
+        );
+    }
+
+    /**
+     * Validate raw input data and return validation errors
+     * Use this before creating a Product instance to check for errors
+     *
+     * @param array $rawData
+     * @return array Array of validation errors (empty if valid)
+     */
+    public static function validateRawInput(array $rawData): array
+    {
+        $errors = [];
+        $rules = self::getValidationRules();
+        
+        // Prepare sanitized data for validation
+        $sanitizedData = [
+            'id' => isset($rawData['id']) ? (int)$rawData['id'] : null,
+            'title' => self::sanitizeStringStatic($rawData['title'] ?? ''),
+            'price' => self::sanitizeNumericStatic($rawData['price'] ?? 0.0),
+            'created_at' => $rawData['created_at'] ?? null
+        ];
+        
+        foreach ($rules as $field => $validator) {
+            try {
+                $validator->assert($sanitizedData[$field] ?? null);
+            } catch (ValidationException $e) {
+                $errors[$field] = $e->getMessage();
+            }
+        }
+        
+        return $errors;
     }
 
     /**
@@ -259,6 +308,28 @@ class Product extends Entity
      */
     private function sanitizeString(string $input): string
     {
+        return self::sanitizeStringStatic($input);
+    }
+
+    /**
+     * Sanitize numeric input
+     *
+     * @param mixed $input
+     * @return float
+     */
+    private function sanitizeNumeric($input): float
+    {
+        return self::sanitizeNumericStatic($input);
+    }
+
+    /**
+     * Static version of string sanitization for use in static methods
+     *
+     * @param string $input
+     * @return string
+     */
+    public static function sanitizeStringStatic(string $input): string
+    {
         // Remove null bytes and control characters
         $input = str_replace(["\0", "\x0B"], '', $input);
         
@@ -272,12 +343,12 @@ class Product extends Entity
     }
 
     /**
-     * Sanitize numeric input
+     * Static version of numeric sanitization for use in static methods
      *
      * @param mixed $input
      * @return float
      */
-    private function sanitizeNumeric($input): float
+    public static function sanitizeNumericStatic($input): float
     {
         // Remove any non-numeric characters except decimal point and minus sign
         $cleaned = preg_replace('/[^0-9.-]/', '', (string)$input);

@@ -113,9 +113,9 @@ class ProductTest extends CIUnitTestCase
 
     public function testTitleBoundaryValues()
     {
-        // Test minimum valid title (1 character)
-        $product = new Product(1, 'A', 99.99);
-        $this->assertEquals('A', $product->title);
+        // Test minimum valid title (3 characters - per validation rules)
+        $product = new Product(1, 'ABC', 99.99);
+        $this->assertEquals('ABC', $product->title);
 
         // Test maximum valid title (255 characters)
         $maxTitle = str_repeat('a', 255);
@@ -147,24 +147,41 @@ class ProductTest extends CIUnitTestCase
 
     // ========== Sanitization Edge Cases ==========
 
-    public function testTitleSanitization()
+    public function testSanitizeStringStaticFunction()
     {
-        // Test HTML tag removal
-        $product = new Product(1, '<script>alert("xss")</script>Clean Title', 99.99);
-        $this->assertStringNotContainsString('<script>', $product->title);
-        $this->assertStringContainsString('Clean Title', $product->title);
+        // Test HTML tag removal: '<script>alert("xss")</script>Clean Title'
+        $result = Product::sanitizeStringStatic('<script>alert("xss")</script>Clean Title');
+        $this->assertStringNotContainsString('<script>', $result);
+        $this->assertStringNotContainsString('</script>', $result);
+        $this->assertStringContainsString('Clean Title', $result);
+
+        // Test special characters conversion: quotes become HTML entities
+        $result = Product::sanitizeStringStatic('Title with "quotes" and \'apostrophes\'');
+        $this->assertStringContainsString('&quot;', $result); // " becomes &quot;
+        $this->assertStringContainsString('&apos;', $result); // ' becomes &apos;
 
         // Test null byte removal
-        $product = new Product(1, "Title\0WithNull", 99.99);
-        $this->assertStringNotContainsString("\0", $product->title);
+        $result = Product::sanitizeStringStatic("Title\0WithNull");
+        $this->assertStringNotContainsString("\0", $result);
 
         // Test control character removal
-        $product = new Product(1, "Title\x0BWithControl", 99.99);
-        $this->assertStringNotContainsString("\x0B", $product->title);
+        $result = Product::sanitizeStringStatic("Title\x0BWithControl");
+        $this->assertStringNotContainsString("\x0B", $result);
 
         // Test whitespace trimming
-        $product = new Product(1, '  Trimmed Title  ', 99.99);
-        $this->assertEquals('Trimmed Title', $product->title);
+        $result = Product::sanitizeStringStatic('  Trimmed Title  ');
+        $this->assertEquals('Trimmed Title', $result);
+    }
+
+    public function testTitleSanitization()
+    {
+        // Test with input that will pass validation after sanitization
+        $product = new Product(1, 'Clean Title Script', 99.99);
+        $this->assertEquals('Clean Title Script', $product->title);
+
+        // Test whitespace trimming in constructor
+        $product = new Product(1, '  Valid Title  ', 99.99);
+        $this->assertEquals('Valid Title', $product->title);
     }
 
     public function testPriceSanitization()
@@ -397,9 +414,9 @@ class ProductTest extends CIUnitTestCase
 
     public function testTitleWithSpecialCharacters()
     {
-        $product = new Product(1, 'Product & Co. "Special" \'Quotes\'', 99.99);
-        // Should be sanitized but still contain the essence
-        $this->assertStringContainsString('Product', $product->title);
+        // Test with characters allowed by regex: letters, numbers, spaces, hyphens, underscores, dots
+        $product = new Product(1, 'Product-Co_Special.Name', 99.99);
+        $this->assertEquals('Product-Co_Special.Name', $product->title);
     }
 
     // ========== Memory and Performance Edge Cases ==========
@@ -445,5 +462,63 @@ class ProductTest extends CIUnitTestCase
         
         $this->expectException(ValidationException::class);
         $product->withPrice(-1.0); // Negative price should fail validation
+    }
+
+    // ========== Title Regex Validation Tests ==========
+
+    public function testTitleWithValidCharactersPassesValidation()
+    {
+        // Test valid characters per regex: letters, numbers, spaces, hyphens, underscores, dots
+        $validTitles = [
+            'Product Name',           // letters and space
+            'Product123',             // letters and numbers
+            'Product-Name',           // letters and hyphen
+            'Product_Name',           // letters and underscore
+            'Product.Name',           // letters and dot
+            'Café Münchën',          // Unicode letters with accents
+            'Product-123_Name.v2',   // combination of all valid characters
+            'Продукт 123',           // Cyrillic letters
+            '商品名称',                // Chinese characters
+        ];
+
+        foreach ($validTitles as $title) {
+            $product = new Product(1, $title, 99.99);
+            $this->assertTrue($product->isValid(), "Title '$title' should be valid but failed validation");
+        }
+    }
+
+    public function testTitleWithInvalidCharactersFailsValidation()
+    {
+        // Test invalid characters that should fail regex validation after sanitization
+        $invalidTitles = [
+            'Product@Name',          // @ symbol not allowed
+            'Product#Name',          // # symbol not allowed
+            'Product$Name',          // $ symbol not allowed
+            'Product%Name',          // % symbol not allowed
+            'Product*Name',          // * symbol not allowed
+            'Product+Name',          // + symbol not allowed
+            'Product=Name',          // = symbol not allowed
+            'Product[Name]',         // brackets not allowed
+            'Product{Name}',         // braces not allowed
+            'Product(Name)',         // parentheses not allowed
+            'Product|Name',          // pipe not allowed
+            'Product\\Name',         // backslash not allowed
+            'Product/Name',          // forward slash not allowed
+            'Product:Name',          // colon not allowed
+            'Product;Name',          // semicolon not allowed
+            'Product?Name',          // question mark not allowed
+            'Product!Name',          // exclamation mark not allowed
+            'Product,Name',          // comma not allowed
+        ];
+
+        foreach ($invalidTitles as $title) {
+            try {
+                new Product(1, $title, 99.99);
+                $this->fail("Title '$title' should have failed validation but passed");
+            } catch (ValidationException $e) {
+                // Expected exception, test passes
+                $this->addToAssertionCount(1);
+            }
+        }
     }
 }

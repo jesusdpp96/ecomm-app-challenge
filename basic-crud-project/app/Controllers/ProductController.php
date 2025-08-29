@@ -4,11 +4,9 @@ namespace App\Controllers;
 
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\ProductModel;
-use App\Libraries\DataSanitizer;
 use App\Libraries\AppLogger;
 use App\Libraries\ResponseFormatter;
 use App\Libraries\ErrorHandler;
-use App\Libraries\DTOs\ProductRequest;
 use App\Libraries\DTOs\ProductResponse;
 use App\Entities\Product;
 use Respect\Validation\Exceptions\ValidationException;
@@ -19,7 +17,6 @@ use Respect\Validation\Exceptions\ValidationException;
 class ProductController extends BaseController
 {
     protected ProductModel $productModel;
-    protected DataSanitizer $sanitizer;
     protected AppLogger $appLogger;
 
     protected const DEFAULT_PAGE = 1;
@@ -29,7 +26,6 @@ class ProductController extends BaseController
     public function __construct()
     {
         $this->productModel = new ProductModel();
-        $this->sanitizer = new DataSanitizer();
         $this->appLogger = new AppLogger('ProductController');
     }
 
@@ -180,14 +176,8 @@ class ProductController extends BaseController
 
             $this->appLogger->logDebug('Raw data received in store()', is_array($rawData) ? $rawData : []);
 
-            $sanitizedData = $this->sanitizer->sanitizeArray($rawData, [
-                'title' => 'string',
-                'price' => 'numeric'
-            ]);
-
-            // Create and validate ProductRequest DTO
-            $productRequest = ProductRequest::fromArray($sanitizedData);
-            $validationErrors = $productRequest->validate();
+            // Validate raw input using Product Entity
+            $validationErrors = Product::validateRawInput($rawData);
 
             if (!empty($validationErrors)) {
                 $errors = ErrorHandler::handleValidationErrors($validationErrors);
@@ -195,8 +185,8 @@ class ProductController extends BaseController
                 return $this->response->setStatusCode(400)->setJSON($response);
             }
 
-            // Create product using model
-            $product = $this->productModel->createProduct($productRequest->getSanitizedData());
+            // Create product using sanitized data from Entity
+            $product = $this->productModel->createProduct($rawData);
 
             if (!$product) {
                 $errors = [['field' => 'product', 'message' => 'Failed to create product', 'type' => 'creation_error']];
@@ -211,7 +201,7 @@ class ProductController extends BaseController
             // Add new CSRF token to the response for form reuse
             $response['csrf_token'] = csrf_hash();
 
-            $this->appLogger->logOperation('create_product', $product->id, $sanitizedData);
+            $this->appLogger->logOperation('create_product', $product->id, $rawData);
 
             return $this->response->setStatusCode(201)->setJSON($response);
         } catch (ValidationException $e) {
@@ -244,16 +234,11 @@ class ProductController extends BaseController
                 return $this->response->setStatusCode(404)->setJSON($response);
             }
 
-            // Get and sanitize input data
+            // Get and validate raw input data
             $rawData = $this->request->getPost();
-            $sanitizedData = $this->sanitizer->sanitizeArray($rawData, [
-                'title' => 'string',
-                'price' => 'numeric'
-            ]);
 
-            // Create and validate ProductRequest DTO
-            $productRequest = ProductRequest::fromArray($sanitizedData);
-            $validationErrors = $productRequest->validate();
+            // Validate raw input using Product Entity
+            $validationErrors = Product::validateRawInput($rawData);
 
             if (!empty($validationErrors)) {
                 $errors = ErrorHandler::handleValidationErrors($validationErrors);
@@ -261,8 +246,8 @@ class ProductController extends BaseController
                 return $this->response->setStatusCode(400)->setJSON($response);
             }
 
-            // Update product using model
-            $product = $this->productModel->updateProduct($id, $productRequest->getSanitizedData());
+            // Update product using sanitized data from Entity
+            $product = $this->productModel->updateProduct($id, $rawData);
 
             if (!$product) {
                 $errors = [['field' => 'product', 'message' => 'Failed to update product', 'type' => 'update_error']];
@@ -277,7 +262,7 @@ class ProductController extends BaseController
             // Add new CSRF token to the response for form reuse
             $response['csrf_token'] = csrf_hash();
 
-            $this->appLogger->logOperation('update_product', $id, $sanitizedData);
+            $this->appLogger->logOperation('update_product', $id, $rawData);
 
             return $this->response->setJSON($response);
         } catch (ValidationException $e) {
@@ -378,7 +363,7 @@ class ProductController extends BaseController
         }
         try {
             $query = $this->request->getGet('q') ?? '';
-            $query = $this->sanitizer->sanitizeString($query);
+            $query = Product::sanitizeStringStatic($query);
 
             $products = $this->productModel->searchProducts($query);
             $formattedProducts = ProductResponse::fromCollection($products);
@@ -405,12 +390,7 @@ class ProductController extends BaseController
      */
     private function validateProductInput(array $data): array
     {
-        try {
-            $productRequest = ProductRequest::fromArray($data);
-            return $productRequest->validate();
-        } catch (\Exception $e) {
-            return ['error' => $e->getMessage()];
-        }
+        return Product::validateRawInput($data);
     }
 
     /**
@@ -458,30 +438,30 @@ class ProductController extends BaseController
 
         // Price range filters
         if ($minPrice = $this->request->getGet('min_price')) {
-            $filters['min_price'] = $this->sanitizer->sanitizeNumeric($minPrice);
+            $filters['min_price'] = Product::sanitizeNumericStatic($minPrice);
         }
 
         if ($maxPrice = $this->request->getGet('max_price')) {
-            $filters['max_price'] = $this->sanitizer->sanitizeNumeric($maxPrice);
+            $filters['max_price'] = Product::sanitizeNumericStatic($maxPrice);
         }
 
         // Search filter
         if ($search = $this->request->getGet('search')) {
-            $filters['search'] = $this->sanitizer->sanitizeString($search);
+            $filters['search'] = Product::sanitizeStringStatic($search);
         }
 
         // Date filters
         if ($dateFrom = $this->request->getGet('date_from')) {
-            $filters['date_from'] = $this->sanitizer->sanitizeString($dateFrom);
+            $filters['date_from'] = Product::sanitizeStringStatic($dateFrom);
         }
 
         if ($dateTo = $this->request->getGet('date_to')) {
-            $filters['date_to'] = $this->sanitizer->sanitizeString($dateTo);
+            $filters['date_to'] = Product::sanitizeStringStatic($dateTo);
         }
 
         // Sorting
-        $filters['sort_by'] = $this->sanitizer->sanitizeString($this->request->getGet('sort_by') ?? 'id');
-        $filters['order'] = $this->sanitizer->sanitizeString($this->request->getGet('order') ?? 'desc');
+        $filters['sort_by'] = Product::sanitizeStringStatic($this->request->getGet('sort_by') ?? 'id');
+        $filters['order'] = Product::sanitizeStringStatic($this->request->getGet('order') ?? 'desc');
 
         return $filters;
     }
