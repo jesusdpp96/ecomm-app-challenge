@@ -4,7 +4,6 @@ namespace App\Controllers;
 
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\ProductModel;
-use App\Libraries\AppLogger;
 use App\Libraries\ResponseFormatter;
 use App\Libraries\ErrorHandler;
 use App\Libraries\DTOs\ProductResponse;
@@ -13,6 +12,7 @@ use App\Exceptions\ProductNotFoundException;
 use App\Exceptions\ProductValidationException;
 use App\Exceptions\ProductStorageException;
 use App\Traits\ErrorHandlingTrait;
+use App\Traits\CrudLoggingTrait;
 use Respect\Validation\Exceptions\ValidationException;
 
 /**
@@ -21,9 +21,9 @@ use Respect\Validation\Exceptions\ValidationException;
 class ProductController extends BaseController
 {
     use ErrorHandlingTrait;
+    use CrudLoggingTrait;
     
     protected ProductModel $productModel;
-    protected AppLogger $appLogger;
 
     protected const DEFAULT_PAGE = 1;
     protected const DEFAULT_PER_PAGE = 7;
@@ -32,7 +32,6 @@ class ProductController extends BaseController
     public function __construct()
     {
         $this->productModel = new ProductModel();
-        $this->appLogger = new AppLogger('ProductController');
     }
 
     // ==================== VIEW METHODS ====================
@@ -57,12 +56,12 @@ class ProductController extends BaseController
                 'filters' => $filters
             ];
 
-            $this->appLogger->logOperation('view_products_list', null, ['page' => $page, 'per_page' => $perPage]);
+            $this->logCrudOperation('list', 'product', null, ['page' => $page, 'per_page' => $perPage]);
 
             return view('products/index', $data);
         } catch (\Exception $e) {
             $errors = ErrorHandler::handleGenericError($e);
-            $this->appLogger->logError('Error loading products index: ' . $e->getMessage());
+            $this->logError('Error loading products index: ' . $e->getMessage());
             return view('errors/500', ['errors' => $errors]);
         }
     }
@@ -97,7 +96,7 @@ class ProductController extends BaseController
         } catch (ProductNotFoundException $e) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         } catch (\Exception $e) {
-            $this->appLogger->logError('Error loading product edit form: ' . $e->getMessage(), ['product_id' => $id]);
+            $this->logError('Error loading product edit form: ' . $e->getMessage(), ['product_id' => $id]);
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
     }
@@ -117,14 +116,14 @@ class ProductController extends BaseController
                 throw new ProductNotFoundException($id);
             }
 
-            $this->appLogger->logOperation('view_product', $id);
+            $this->logCrudOperation('read', 'product', $id);
             
             $data = ['product' => $product];
             return view('products/show', $data);
         } catch (ProductNotFoundException $e) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         } catch (\Exception $e) {
-            $this->appLogger->logError('Error loading product view: ' . $e->getMessage(), ['product_id' => $id]);
+            $this->logError('Error loading product view: ' . $e->getMessage(), ['product_id' => $id]);
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
     }
@@ -157,7 +156,7 @@ class ProductController extends BaseController
                 $perPage
             );
 
-            $this->appLogger->logOperation('api_list_products', null, ['page' => $page, 'per_page' => $perPage]);
+            $this->logCrudOperation('list', 'product', null, ['page' => $page, 'per_page' => $perPage, 'api' => true]);
 
             return $this->response->setJSON($response);
         } catch (\Exception $e) {
@@ -181,11 +180,11 @@ class ProductController extends BaseController
         return $this->executeWithErrorHandling(function() {
             $isLoggedIn = session()->get('is_logged_in');
 
-            log_message('debug', 'User is logged in: ' . ($isLoggedIn ? 'Yes' : 'No'));
+            $this->logDebug('User is logged in: ' . ($isLoggedIn ? 'Yes' : 'No'));
             
             $rawData = $this->request->getPost();
 
-            $this->appLogger->logDebug('Raw data received in store()', is_array($rawData) ? $rawData : []);
+            $this->logDebug('Raw data received in store()', is_array($rawData) ? $rawData : []);
 
             # Placeholder for next id
             $rawData['id'] = 1;
@@ -211,7 +210,7 @@ class ProductController extends BaseController
             // Add new CSRF token to the response for form reuse
             $response['csrf_token'] = csrf_hash();
 
-            $this->appLogger->logOperation('create_product', $product->id, $rawData);
+            $this->logCrudOperation('create', 'product', $product->id, $rawData);
 
             return $this->response->setStatusCode(201)->setJSON($response);
         }, 'No se pudo crear el producto');
@@ -260,7 +259,7 @@ class ProductController extends BaseController
             // Add new CSRF token to the response for form reuse
             $response['csrf_token'] = csrf_hash();
 
-            $this->appLogger->logOperation('update_product', $id, $rawData);
+            $this->logCrudOperation('update', 'product', $id, $rawData);
 
             return $this->response->setJSON($response);
         }, 'No se pudo actualizar el producto');
@@ -293,7 +292,7 @@ class ProductController extends BaseController
 
             $response = ResponseFormatter::deleted('Product deleted successfully');
 
-            $this->appLogger->logOperation('delete_product', $id);
+            $this->logCrudOperation('delete', 'product', $id);
 
             return $this->response->setJSON($response);
         }, 'No se pudo eliminar el producto');
@@ -321,7 +320,7 @@ class ProductController extends BaseController
             $productResponse = ProductResponse::fromModel($product);
             $response = ResponseFormatter::success($productResponse->toArray(), 'Product retrieved successfully');
 
-            $this->appLogger->logOperation('api_view_product', $id);
+            $this->logCrudOperation('read', 'product', $id, ['api' => true]);
             
             return $this->response->setJSON($response);
         }, 'No se pudo obtener el producto');
@@ -347,7 +346,7 @@ class ProductController extends BaseController
 
             $response = ResponseFormatter::success($formattedProducts, 'Search completed');
 
-            $this->appLogger->logOperation('search_products', null, ['query' => $query, 'results_count' => count($products)]);
+            $this->logCrudOperation('search', 'product', null, ['query' => $query, 'results_count' => count($products)]);
 
             return $this->response->setJSON($response);
         }, 'No se pudo realizar la busqueda');

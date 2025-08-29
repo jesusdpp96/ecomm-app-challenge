@@ -10,7 +10,7 @@ use App\Exceptions\ProductNotFoundException;
 use App\Exceptions\ProductStorageException;
 use Config\Storage as StorageConfig;
 use Respect\Validation\Exceptions\ValidationException;
-use App\Libraries\AppLogger;
+use App\Traits\CrudLoggingTrait;
 
 /**
  * Product model with JSON storage backend
@@ -18,9 +18,10 @@ use App\Libraries\AppLogger;
  */
 class ProductModel extends Model
 {
+    use CrudLoggingTrait;
+    
     protected JSONStorage $storage;
     protected StorageConfig $config;
-    protected AppLogger $appLogger;
 
     /**
      * Initialize the model
@@ -31,7 +32,6 @@ class ProductModel extends Model
         
         $this->config = config('Storage');
         $this->storage = new JSONStorage($this->config->getProductsFilePath());
-        $this->appLogger = new AppLogger('ProductModel');
     }
 
     /**
@@ -76,7 +76,7 @@ class ProductModel extends Model
                 ]
             ];
         } catch (StorageException $e) {
-            log_message('error', 'ProductModel::getAllProducts - ' . $e->getMessage());
+            $this->logError('ProductModel::getAllProducts - ' . $e->getMessage());
             return ['products' => [], 'pagination' => []];
         }
     }
@@ -100,10 +100,10 @@ class ProductModel extends Model
             
             return null;
         } catch (StorageException $e) {
-            log_message('error', 'ProductModel::getProductById - ' . $e->getMessage());
+            $this->logError('ProductModel::getProductById - ' . $e->getMessage());
             return null;
         } catch (ValidationException $e) {
-            log_message('error', 'ProductModel::getProductById - Invalid product data: ' . $e->getMessage());
+            $this->logError('ProductModel::getProductById - Invalid product data: ' . $e->getMessage());
             return null;
         }
     }
@@ -141,10 +141,10 @@ class ProductModel extends Model
 
             return false;
         } catch (ValidationException $e) {
-            log_message('error', 'ProductModel::createProduct - Validation error: ' . $e->getMessage());
+            $this->logError('ProductModel::createProduct - Validation error: ' . $e->getMessage());
             return false;
         } catch (StorageException $e) {
-            log_message('error', 'ProductModel::createProduct - Storage error: ' . $e->getMessage());
+            $this->logError('ProductModel::createProduct - Storage error: ' . $e->getMessage());
             return false;
         }
     }
@@ -186,10 +186,10 @@ class ProductModel extends Model
 
             return false; // Product not found
         } catch (ValidationException $e) {
-            log_message('error', 'ProductModel::updateProduct - Validation error: ' . $e->getMessage());
+            $this->logError('ProductModel::updateProduct - Validation error: ' . $e->getMessage());
             return false;
         } catch (StorageException $e) {
-            log_message('error', 'ProductModel::updateProduct - Storage error: ' . $e->getMessage());
+            $this->logError('ProductModel::updateProduct - Storage error: ' . $e->getMessage());
             return false;
         }
     }
@@ -215,7 +215,7 @@ class ProductModel extends Model
 
             return false; // Product not found
         } catch (StorageException $e) {
-            log_message('error', 'ProductModel::deleteProduct - ' . $e->getMessage());
+            $this->logError('ProductModel::deleteProduct - ' . $e->getMessage());
             return false;
         }
     }
@@ -247,7 +247,7 @@ class ProductModel extends Model
 
             return $results;
         } catch (StorageException $e) {
-            log_message('error', 'ProductModel::searchProducts - ' . $e->getMessage());
+            $this->logError('ProductModel::searchProducts - ' . $e->getMessage());
             return [];
         }
     }
@@ -302,30 +302,24 @@ class ProductModel extends Model
     {
         $filtered = $products;
         
-        // Log that applyFilters is being called
-        log_message('info', "ProductModel::applyFilters called with filters: " . json_encode($filters));
 
         // Filter by price range
         if (isset($filters['min_price'])) {
             $minPrice = (float)$filters['min_price'];
-            log_message('info', "Applying min_price filter: {$minPrice}");
             $countBefore = count($filtered);
             $filtered = array_filter($filtered, function(Product $product) use ($minPrice) {
                 return $product->price >= $minPrice;
             });
             $countAfter = count($filtered);
-            log_message('info', "Min price filter: {$countBefore} -> {$countAfter} products");
         }
 
         if (isset($filters['max_price'])) {
             $maxPrice = (float)$filters['max_price'];
-            log_message('info', "Applying max_price filter: {$maxPrice}");
             $countBefore = count($filtered);
             $filtered = array_filter($filtered, function(Product $product) use ($maxPrice) {
                 return $product->price <= $maxPrice;
             });
             $countAfter = count($filtered);
-            log_message('info', "Max price filter: {$countBefore} -> {$countAfter} products");
         }
 
         // Filter by date range
@@ -427,7 +421,7 @@ class ProductModel extends Model
             $data = $this->storage->read();
             return count($data['products']);
         } catch (StorageException $e) {
-            log_message('error', 'ProductModel::getProductsCount - ' . $e->getMessage());
+            $this->logError('ProductModel::getProductsCount - ' . $e->getMessage());
             return 0;
         }
     }
@@ -476,7 +470,7 @@ class ProductModel extends Model
                 $entities[] = Product::fromArray($productData);
             } catch (ValidationException $e) {
                 // Log invalid product data but continue processing
-                log_message('warning', 'ProductModel::convertArraysToEntities - Invalid product data: ' . $e->getMessage());
+                $this->logWarning('ProductModel::convertArraysToEntities - Invalid product data: ' . $e->getMessage());
             }
         }
         
