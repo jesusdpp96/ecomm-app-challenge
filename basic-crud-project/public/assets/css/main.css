@@ -524,15 +524,26 @@ label {
     margin: var(--spacing-lg) 0;
 }
 
-.btn-spinner {
-    display: none;
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
 }
 
-.btn-spinner.show {
-    display: inline;
+.btn .btn-spinner {
+    display: none; /* Hidden by default */
+    width: 1.2rem;
+    height: 1.2rem;
+    vertical-align: -0.225em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border .75s linear infinite;
 }
 
-.btn-text.hide {
+.btn .btn-spinner.show {
+    display: inline-block; /* Shown when .show is added */
+}
+
+.btn .btn-text.hide {
     display: none;
 }
 

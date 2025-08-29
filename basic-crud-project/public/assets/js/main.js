@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (searchForm && productsTable) {
-        new ProductFilter('#search-form', '#products-table', '#pagination');
+        new ProductFilter('#search-form', '#products-table', '#pagination', '#search-btn');
     }
     
     // Initialize form validation and AJAX handling

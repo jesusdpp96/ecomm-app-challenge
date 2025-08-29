@@ -3,10 +3,11 @@
  * Manages form submission, URL updates, and table content updates
  */
 class ProductFilter {
-    constructor(formSelector, tableSelector, paginationSelector = null) {
+    constructor(formSelector, tableSelector, paginationSelector = null, searchButtonSelector = null) {
         this.form = document.querySelector(formSelector);
         this.table = document.querySelector(tableSelector);
         this.pagination = paginationSelector ? document.querySelector(paginationSelector) : null;
+        this.searchButton = searchButtonSelector ? document.querySelector(searchButtonSelector) : null;
         this.tbody = this.table ? this.table.querySelector('tbody') : null;
         
         if (!this.form || !this.table || !this.tbody) {
@@ -74,36 +75,47 @@ class ProductFilter {
         });
     }
     
-    async applyFilters(sortBy = null, order = null) {
+    async applyFilters(sortBy = null, order = null, clearFilters = false) {
         if (this.isLoading) return;
-        
+
         this.isLoading = true;
-        UIHelpers.showTableLoading();
-        
+        if (this.searchButton) {
+            UIHelpers.showLoading(this.searchButton);
+        }
+
         try {
-            const formData = new FormData(this.form);
-            const params = new URLSearchParams();
-            
-            // Add form data to params
-            for (const [key, value] of formData.entries()) {
-                if (value.trim()) {
-                    params.append(key, value);
+            let params = new URLSearchParams();
+
+            if (!clearFilters) {
+                const formData = new FormData(this.form);
+                // Add form data to params
+                for (const [key, value] of formData.entries()) {
+                    if (value.trim()) {
+                        params.append(key, value);
+                    }
                 }
             }
-            
+
             // Add pagination
             params.append('page', this.currentPage);
             params.append('per_page', '7');
-            
+
             // Add sorting if provided
             if (sortBy) {
                 params.append('sort_by', sortBy);
                 params.append('order', order);
+            } else {
+                // If not sorting, check for existing sort in URL
+                const currentParams = new URLSearchParams(window.location.search);
+                if (currentParams.has('sort_by')) {
+                    params.append('sort_by', currentParams.get('sort_by'));
+                    params.append('order', currentParams.get('order'));
+                }
             }
-            
+
             // Update URL without page reload
-            this.updateURL(params);
-            
+            this.updateURL(clearFilters ? new URLSearchParams() : params);
+
             // Make AJAX request
             const response = await fetch(`${this.apiEndpoint}?${params.toString()}`, {
                 method: 'GET',
@@ -132,7 +144,11 @@ class ProductFilter {
             UIHelpers.showNotification('Error al aplicar filtros: ' + error.message, 'error');
         } finally {
             this.isLoading = false;
-            UIHelpers.hideTableLoading();
+            if (this.searchButton) {
+                setTimeout(() => {
+                    UIHelpers.hideLoading(this.searchButton);
+                }, 2000);
+            }
         }
     }
     
@@ -195,18 +211,7 @@ class ProductFilter {
     
     updateURL(params) {
         const url = new URL(window.location);
-        
-        // Clear existing search params
-        url.search = '';
-        
-        // Add new params
-        for (const [key, value] of params.entries()) {
-            if (value && value.trim()) {
-                url.searchParams.set(key, value);
-            }
-        }
-        
-        // Update URL without page reload
+        url.search = params.toString();
         window.history.pushState({}, '', url.toString());
     }
     
@@ -226,19 +231,15 @@ class ProductFilter {
     }
     
     resetFilters() {
-        // Clear form
         this.form.reset();
-        
-        // Reset page
         this.currentPage = 1;
-        
-        // Clear URL params
-        const url = new URL(window.location);
-        url.search = '';
-        window.history.pushState({}, '', url.toString());
-        
-        // Apply empty filters (reload all products)
-        this.applyFilters();
+
+        // Remove sort indicators from headers
+        const sortHeaders = this.table.querySelectorAll('th[data-sort]');
+        sortHeaders.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+
+        // Apply empty filters and clear URL
+        this.applyFilters(null, null, true);
     }
     
     escapeHtml(text) {

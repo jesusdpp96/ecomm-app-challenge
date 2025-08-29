@@ -94,26 +94,4 @@ class UIHelpers {
       });
   }
 
-  static showTableLoading() {
-      const loadingElement = document.getElementById('loading');
-      if (loadingElement) {
-          loadingElement.classList.remove('hidden');
-      }
-      
-      // Ensure loading shows for at least 2 seconds
-      this._loadingStartTime = Date.now();
-  }
-  
-  static hideTableLoading() {
-      const loadingElement = document.getElementById('loading');
-      if (!loadingElement) return;
-      
-      const minLoadingTime = 2000; // 2 seconds
-      const elapsedTime = Date.now() - (this._loadingStartTime || 0);
-      const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
-      
-      setTimeout(() => {
-          loadingElement.classList.add('hidden');
-      }, remainingTime);
-  }
 }

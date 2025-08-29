@@ -21,7 +21,10 @@
                 <input type="number" name="max_price" placeholder="Precio máx." value="<?= esc($filters['max_price'] ?? '') ?>" class="form-control">
                 <input type="date" name="date_from" value="<?= esc($filters['date_from'] ?? '') ?>" class="form-control">
                 <input type="date" name="date_to" value="<?= esc($filters['date_to'] ?? '') ?>" class="form-control">
-                <button type="submit" class="btn btn-secondary">Buscar</button>
+                <button type="submit" class="btn btn-secondary" id="search-btn">
+                    <span class="btn-text">Buscar</span>
+                    <span class="btn-spinner hidden" role="status" aria-hidden="true"></span>
+                </button>
                 <button type="reset" class="btn btn-secondary">Limpiar</button>
             </div>
         </form>
@@ -87,11 +90,6 @@
         </div>
     <?php endif; ?>
     
-    <!-- Loading state -->
-    <div id="loading" class="loading hidden">
-        <div class="spinner"></div>
-        <p>Cargando productos...</p>
-    </div>
 </div>
 
 <?= $this->section('scripts') ?>
