@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('content') ?>
-<div class="products-container">
+<div class="products-container" data-logged-in="<?= session()->get('is_logged_in') ? 'true' : 'false' ?>">
     <!-- Header con botón de crear -->
     <div class="products-header">
         <h1>Gestión de Productos</h1>
@@ -17,8 +17,8 @@
         <form id="search-form" method="GET">
             <div class="filter-group">
                 <input type="text" name="search" id="search" placeholder="Buscar por título..." value="<?= esc($filters['search'] ?? '') ?>" class="form-control">
-                <input type="number" name="price_min" placeholder="Precio mín." value="<?= esc($filters['min_price'] ?? '') ?>" class="form-control">
-                <input type="number" name="price_max" placeholder="Precio máx." value="<?= esc($filters['max_price'] ?? '') ?>" class="form-control">
+                <input type="number" name="min_price" placeholder="Precio mín." value="<?= esc($filters['min_price'] ?? '') ?>" class="form-control">
+                <input type="number" name="max_price" placeholder="Precio máx." value="<?= esc($filters['max_price'] ?? '') ?>" class="form-control">
                 <input type="date" name="date_from" value="<?= esc($filters['date_from'] ?? '') ?>" class="form-control">
                 <input type="date" name="date_to" value="<?= esc($filters['date_to'] ?? '') ?>" class="form-control">
                 <button type="submit" class="btn btn-secondary">Buscar</button>
@@ -93,4 +93,9 @@
         <p>Cargando productos...</p>
     </div>
 </div>
+
+<?= $this->section('scripts') ?>
+<script src="<?= base_url('assets/js/classes/product-filter.js') ?>"></script>
+<?= $this->endSection() ?>
+
 <?= $this->endSection() ?>

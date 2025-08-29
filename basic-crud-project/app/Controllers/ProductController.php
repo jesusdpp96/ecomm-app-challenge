@@ -136,6 +136,8 @@ class ProductController extends BaseController
             $perPage = min(100, (int)($this->request->getGet('per_page') ?? 10));
             $filters = $this->getFiltersFromRequest();
 
+            log_message('info', "ProductController::apiIndex called with filters: " . json_encode($filters));
+
             $result = $this->productModel->getAllProducts($filters, $page, $perPage);
             
             // Format products using ProductResponse DTO

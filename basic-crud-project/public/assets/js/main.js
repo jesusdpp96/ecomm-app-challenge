@@ -1,9 +1,16 @@
 // Initialize UI components when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize table sorting
+    // Initialize table sorting and product filtering with AJAX
     const productsTable = document.getElementById('products-table');
+    const searchForm = document.getElementById('search-form');
+    const pagination = document.getElementById('pagination');
+    
     if (productsTable) {
         new TableSorter('products-table');
+    }
+    
+    if (searchForm && productsTable) {
+        new ProductFilter('#search-form', '#products-table', '#pagination');
     }
     
     // Initialize form validation and AJAX handling
@@ -13,19 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Use AJAX for both create and edit forms
         new ProductFormHandler('product-form');
-    }
-    
-    // Initialize search form
-    const searchForm = document.getElementById('search-form');
-    if (searchForm) {
-        const resetBtn = searchForm.querySelector('button[type="reset"]');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function() {
-                setTimeout(() => {
-                    window.location.href = window.location.pathname;
-                }, 100);
-            });
-        }
     }
     
     // Close modal on escape key

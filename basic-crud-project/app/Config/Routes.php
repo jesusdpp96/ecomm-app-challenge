@@ -19,6 +19,9 @@ $routes->get('/', 'ProductController::index');
 $routes->get('products', 'ProductController::index');
 $routes->get('products/(:num)', 'ProductController::show/$1');
 
+// Public API for filtering (read-only)
+$routes->get('api/products', 'ProductController::apiIndex');
+
 // =============================================================================
 // PROTECTED ROUTES - Authentication required
 // =============================================================================

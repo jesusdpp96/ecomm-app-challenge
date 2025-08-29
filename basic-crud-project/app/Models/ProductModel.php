@@ -8,6 +8,7 @@ use App\Entities\Product;
 use App\Exceptions\StorageException;
 use Config\Storage as StorageConfig;
 use Respect\Validation\Exceptions\ValidationException;
+use App\Libraries\AppLogger;
 
 /**
  * Product model with JSON storage backend
@@ -17,6 +18,7 @@ class ProductModel extends Model
 {
     protected JSONStorage $storage;
     protected StorageConfig $config;
+    protected AppLogger $appLogger;
 
     /**
      * Initialize the model
@@ -27,6 +29,7 @@ class ProductModel extends Model
         
         $this->config = config('Storage');
         $this->storage = new JSONStorage($this->config->getProductsFilePath());
+        $this->appLogger = new AppLogger('ProductModel');
     }
 
     /**
@@ -296,20 +299,31 @@ class ProductModel extends Model
     private function applyFilters(array $products, array $filters): array
     {
         $filtered = $products;
+        
+        // Log that applyFilters is being called
+        log_message('info', "ProductModel::applyFilters called with filters: " . json_encode($filters));
 
         // Filter by price range
         if (isset($filters['min_price'])) {
             $minPrice = (float)$filters['min_price'];
+            log_message('info', "Applying min_price filter: {$minPrice}");
+            $countBefore = count($filtered);
             $filtered = array_filter($filtered, function(Product $product) use ($minPrice) {
                 return $product->price >= $minPrice;
             });
+            $countAfter = count($filtered);
+            log_message('info', "Min price filter: {$countBefore} -> {$countAfter} products");
         }
 
         if (isset($filters['max_price'])) {
             $maxPrice = (float)$filters['max_price'];
+            log_message('info', "Applying max_price filter: {$maxPrice}");
+            $countBefore = count($filtered);
             $filtered = array_filter($filtered, function(Product $product) use ($maxPrice) {
                 return $product->price <= $maxPrice;
             });
+            $countAfter = count($filtered);
+            log_message('info', "Max price filter: {$countBefore} -> {$countAfter} products");
         }
 
         // Filter by date range
