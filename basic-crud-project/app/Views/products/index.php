@@ -72,19 +72,19 @@
         <div class="pagination-container">
             <nav id="pagination" class="pagination">
                 <?php if ($pagination['has_prev']): ?>
-                    <a href="?page=<?= $pagination['current_page'] - 1 ?><?= http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : '' ?>">« Anterior</a>
+                    <a href="?page=<?= $pagination['current_page'] - 1 ?><?= http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : '' ?>" data-page="<?= $pagination['current_page'] - 1 ?>">« Anterior</a>
                 <?php endif; ?>
                 
                 <?php for ($i = 1; $i <= $pagination['total_pages']; $i++): ?>
                     <?php if ($i == $pagination['current_page']): ?>
                         <span class="active"><?= $i ?></span>
                     <?php else: ?>
-                        <a href="?page=<?= $i ?><?= http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : '' ?>"><?= $i ?></a>
+                        <a href="?page=<?= $i ?><?= http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : '' ?>" data-page="<?= $i ?>"><?= $i ?></a>
                     <?php endif; ?>
                 <?php endfor; ?>
                 
                 <?php if ($pagination['has_next']): ?>
-                    <a href="?page=<?= $pagination['current_page'] + 1 ?><?= http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : '' ?>">Siguiente »</a>
+                    <a href="?page=<?= $pagination['current_page'] + 1 ?><?= http_build_query(array_filter($filters)) ? '&' . http_build_query(array_filter($filters)) : '' ?>" data-page="<?= $pagination['current_page'] + 1 ?>">Siguiente »</a>
                 <?php endif; ?>
             </nav>
         </div>
