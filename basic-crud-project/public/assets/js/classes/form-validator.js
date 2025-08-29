@@ -53,9 +53,9 @@ class FormValidator {
           if (value.length < 3) {
               isValid = false;
               errorMessage = 'El título debe tener al menos 3 caracteres';
-          } else if (value.length > 100) {
+          } else if (value.length > 255) {
               isValid = false;
-              errorMessage = 'El título no puede exceder 100 caracteres';
+              errorMessage = 'El título no puede exceder 255 caracteres';
           }
       }
       

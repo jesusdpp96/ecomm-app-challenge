@@ -36,13 +36,17 @@ class ProductFormHandler {
             const formData = this.getFormData();
             const response = await this.submitProduct(formData);
 
-            if (response.success) {
-                this.handleSuccess(response);
-            } else {
-                this.handleErrors(response.errors || []);
-            }
+            this.handleSuccess(response);
+
         } catch (error) {
-            this.handleNetworkError(error);
+            console.error('Error al enviar el formulario:', error);
+            // Check if it's a validation error with a JSON body
+            if (error.responseJson) {
+                console.error('Error al enviar el formulario:', error.responseJson);
+                this.handleErrors(error.responseJson);
+            } else {
+                this.handleNetworkError(error);
+            }
         } finally {
             this.setLoadingState(false);
         }
@@ -56,70 +60,38 @@ class ProductFormHandler {
         }
         
         // Extract CSRF token fields - CodeIgniter uses dynamic field names
-        const csrfData = getCSRFTokenFromForm();
-                
-        const data = {
-            title: formData.get('title')?.trim(),
-            price: parseFloat(formData.get('price')) || 0
-        };
-        
-        // Add CSRF tokens if they exist
-        if (csrfData.name && csrfData.value) {
-            data[csrfData.name] = csrfData.value;
-        } else {
-            console.error('CSRF tokens not found in form data');
-        }
-        
-        return data;
+        return formData;
     }
 
-    async submitProduct(data) {
-        // Determine endpoint and method based on form type
+    async submitProduct(formData) {
         const endpoint = this.isEditForm ? `/api/products/${this.productId}` : '/api/products';
-        const method = this.isEditForm ? 'PUT' : 'POST';
-        
-        // For PUT requests, send as JSON; for POST, use FormData
-        let body;
-        let headers = {
+        const method = 'POST'; // Always use POST
+
+        // If editing, use method spoofing for PUT
+        if (this.isEditForm) {
+            formData.append('_method', 'PUT');
+        }
+
+        const headers = {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
         };
-        
-        if (this.isEditForm) {
-            // Send as JSON for PUT requests
-            headers['Content-Type'] = 'application/json';
-            body = JSON.stringify(data);
-        } else {
-            // Send as FormData for POST requests (better CSRF compatibility)
-            const formData = new FormData();
-            Object.keys(data).forEach(key => {
-                formData.append(key, data[key]);
-            });
-            body = formData;
-        }
-        
-        console.log(`Submitting ${method} request to ${endpoint}`);
-        
+
+        console.log(`Submitting ${method} request to ${endpoint} (spoofing ${this.isEditForm ? 'PUT' : 'POST'})`);
+
         const response = await fetch(endpoint, {
             method: method,
             headers: headers,
-            body: body
+            body: formData
         });
 
         const result = await response.json();
         
         // Handle HTTP status codes
         if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('No autorizado. Por favor, inicie sesión nuevamente.');
-            } else if (response.status === 403) {
-                throw new Error('No tiene permisos para realizar esta acción.');
-            } else if (response.status === 422 || response.status === 400) {
-                // Validation errors - return as is
-                return result;
-            } else {
-                throw new Error(result.message || 'Error del servidor');
-            }
+            const error = new Error('Server error');
+            error.responseJson = result; // Attach the JSON response to the error
+            throw error;
         }
 
         return result;
@@ -145,22 +117,11 @@ class ProductFormHandler {
         this.clearErrors();
     }
 
-    handleErrors(errors) {
-        if (!Array.isArray(errors)) {
-            UIHelpers.showNotification('Error de validación', 'error');
-            return;
-        }
-
-        errors.forEach(error => {
-            if (error.field && error.message) {
-                this.showFieldError(error.field, error.message);
-            } else {
-                UIHelpers.showNotification(
-                    error.message || 'Error de validación',
-                    'error'
-                );
-            }
-        });
+    handleErrors(response) {
+        // Handle new error format { success, code, errors, message, ... }
+        
+        //     UIHelpers.showNotification(response.message, 'error');
+        UIHelpers.showNotification("Error al procesar el formulario", 'error');
     }
 
     handleNetworkError(error) {

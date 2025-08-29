@@ -40,7 +40,7 @@ class ProductRequest
         try {
             // Use Product entity validation by creating a temporary instance
             new Product(
-                null,
+                1,
                 $this->title ?? '',
                 $this->price ?? 0.0
             );

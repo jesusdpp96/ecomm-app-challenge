@@ -34,14 +34,6 @@ class ProductTest extends CIUnitTestCase
         $this->assertInstanceOf(DateTime::class, $product->created_at);
     }
 
-    public function testConstructorWithNullId()
-    {
-        $product = new Product(null, 'Test Product', 99.99);
-        
-        $this->assertNull($product->id);
-        $this->assertEquals('Test Product', $product->title);
-        $this->assertEquals(99.99, $product->price);
-    }
 
     public function testConstructorWithCustomCreatedAt()
     {
@@ -60,6 +52,12 @@ class ProductTest extends CIUnitTestCase
     }
 
     // ========== Validation Edge Cases ==========
+
+    public function testConstructorThrowsExceptionForNullId()
+    {
+        $this->expectException(ValidationException::class);
+        new Product(null, 'Test Product', 99.99);
+    }
 
     public function testConstructorThrowsExceptionForEmptyTitle()
     {
@@ -308,21 +306,6 @@ class ProductTest extends CIUnitTestCase
         Product::fromArray([]); // Missing required fields should cause validation to fail
     }
 
-    public function testFromArrayWithPartialData()
-    {
-        $data = [
-            'title' => 'Test Product',
-            'price' => 99.99
-        ];
-
-        $product = Product::fromArray($data);
-
-        $this->assertNull($product->id);
-        $this->assertEquals('Test Product', $product->title);
-        $this->assertEquals(99.99, $product->price);
-        $this->assertInstanceOf(DateTime::class, $product->created_at);
-    }
-
     public function testToArrayReturnsCorrectFormat()
     {
         $product = new Product(1, 'Test Product', 99.99);
@@ -333,6 +316,17 @@ class ProductTest extends CIUnitTestCase
         $this->assertArrayHasKey('price', $array);
         $this->assertArrayHasKey('created_at', $array);
         $this->assertIsString($array['created_at']); // Should be formatted as string
+    }
+
+    public function testFromArrayWithPartialData()
+    {
+        $data = [
+            'title' => 'Test Product',
+            'price' => 99.99
+        ];
+
+        $this->expectException(ValidationException::class);
+        Product::fromArray($data);
     }
 
     // ========== Formatting Methods Tests ==========

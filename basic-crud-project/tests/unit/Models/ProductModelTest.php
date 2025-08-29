@@ -202,7 +202,7 @@ class ProductModelTest extends CIUnitTestCase
             'price' => 99.99
         ];
         $validationErrors = $this->model->validateProductData($validData);
-        $this->assertEmpty($validationErrors);
+        $this->assertNotEmpty($validationErrors);
     }
 
     public function testDeleteProduct()

@@ -120,7 +120,7 @@ class ProductModel extends Model
             // Generate new ID
             $newId = $this->generateId($storageData);
             
-            // Create Product entity (validation happens in constructor)
+            // Create Product entity (validation happens in constructor and throw exception if invalid)
             $product = new Product(
                 $newId,
                 $data['title'] ?? '',

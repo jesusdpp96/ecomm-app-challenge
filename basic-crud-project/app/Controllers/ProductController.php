@@ -176,13 +176,8 @@ class ProductController extends BaseController
 
             log_message('debug', 'User is logged in: ' . ($isLoggedIn ? 'Yes' : 'No'));
             
-            // Get and sanitize input data
-            $contentType = $this->request->getHeaderLine('Content-Type');
-            if (strpos($contentType, 'application/json') !== false) {
-                $rawData = $this->request->getJSON(true);
-            } else {
-                $rawData = $this->request->getPost();
-            }
+            $rawData = $this->request->getPost();
+
             $this->appLogger->logDebug('Raw data received in store()', is_array($rawData) ? $rawData : []);
 
             $sanitizedData = $this->sanitizer->sanitizeArray($rawData, [
@@ -250,7 +245,7 @@ class ProductController extends BaseController
             }
 
             // Get and sanitize input data
-            $rawData = $this->request->getJSON(true) ?? $this->request->getPost();
+            $rawData = $this->request->getPost();
             $sanitizedData = $this->sanitizer->sanitizeArray($rawData, [
                 'title' => 'string',
                 'price' => 'numeric'

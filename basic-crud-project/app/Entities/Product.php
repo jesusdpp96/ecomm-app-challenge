@@ -30,10 +30,10 @@ class Product extends Entity
     private static function getValidationRules(): array
     {
         return [
-            'id' => v::optional(v::intVal()->positive()),
+            'id' => v::intVal()->positive(),
             'title' => v::stringType()
                         ->notEmpty()
-                        ->length(1, 255)
+                        ->length(3, 255)
                         ->setName('Title'),
             'price' => v::numericVal()
                        ->positive()
