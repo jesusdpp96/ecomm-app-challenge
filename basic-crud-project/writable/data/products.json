@@ -1,0 +1,130 @@
+{
+    "products": [
+        {
+            "id": 1,
+            "title": "Smartphone Samsung Galaxy S23",
+            "price": 899.99,
+            "created_at": "2024-01-15T10:30:00+00:00"
+        },
+        {
+            "id": 2,
+            "title": "Laptop Dell XPS 13",
+            "price": 1299,
+            "created_at": "2024-01-15T10:30:00+00:00"
+        },
+        {
+            "id": 3,
+            "title": "Auriculares Sony WH-1000XM4",
+            "price": 349.99,
+            "created_at": "2024-01-15T10:30:00+00:00"
+        },
+        {
+            "id": 4,
+            "title": "Tablet iPad Air",
+            "price": 599,
+            "created_at": "2024-01-15T10:30:00+00:00"
+        },
+        {
+            "id": 5,
+            "title": "Smartwatch Apple Watch Series 8",
+            "price": 429,
+            "created_at": "2024-01-15T10:30:00+00:00"
+        },
+        {
+            "id": 6,
+            "title": "Cámara Canon EOS R5",
+            "price": 3899,
+            "created_at": "2025-08-27T11:48:11+00:00"
+        },
+        {
+            "id": 7,
+            "title": "Teclado Mecánico Logitech MX Keys",
+            "price": 99.99,
+            "created_at": "2025-08-27T11:48:11+00:00"
+        },
+        {
+            "id": 8,
+            "title": "Monitor LG UltraWide 34",
+            "price": 449.99,
+            "created_at": "2025-08-27T11:48:11+00:00"
+        },
+        {
+            "id": 9,
+            "title": "Ratón Gaming Razer DeathAdder V3",
+            "price": 69.99,
+            "created_at": "2025-08-27T11:48:11+00:00"
+        },
+        {
+            "id": 10,
+            "title": "Altavoz Bluetooth JBL Charge 5",
+            "price": 179.95,
+            "created_at": "2025-08-27T11:48:11+00:00"
+        },
+        {
+            "id": 11,
+            "title": "Disco Duro Externo Seagate 2TB",
+            "price": 89.99,
+            "created_at": "2025-08-27T11:48:22+00:00"
+        },
+        {
+            "id": 12,
+            "title": "Webcam Logitech C920",
+            "price": 79.99,
+            "created_at": "2025-08-27T11:48:22+00:00"
+        },
+        {
+            "id": 13,
+            "title": "Router WiFi 6 ASUS AX6000",
+            "price": 299.99,
+            "created_at": "2025-08-27T11:48:22+00:00"
+        },
+        {
+            "id": 14,
+            "title": "Impresora HP LaserJet Pro",
+            "price": 199,
+            "created_at": "2025-08-27T11:48:22+00:00"
+        },
+        {
+            "id": 15,
+            "title": "SSD Samsung 980 PRO 1TB",
+            "price": 129.99,
+            "created_at": "2025-08-27T11:48:22+00:00"
+        },
+        {
+            "id": 16,
+            "title": "Micrófono Blue Yeti",
+            "price": 99.99,
+            "created_at": "2025-08-27T11:48:46+00:00"
+        },
+        {
+            "id": 17,
+            "title": "Consola PlayStation 5",
+            "price": 499.99,
+            "created_at": "2025-08-27T11:48:46+00:00"
+        },
+        {
+            "id": 18,
+            "title": "Televisor Samsung QLED 55",
+            "price": 1199,
+            "created_at": "2025-08-27T11:48:46+00:00"
+        },
+        {
+            "id": 19,
+            "title": "Cafetera Nespresso Vertuo",
+            "price": 159.99,
+            "created_at": "2025-08-27T11:48:46+00:00"
+        },
+        {
+            "id": 20,
+            "title": "Aspiradora Robot Roomba i7+",
+            "price": 799.99,
+            "created_at": "2025-08-27T11:48:46+00:00"
+        }
+    ],
+    "next_id": 46,
+    "metadata": {
+        "created_at": "2024-01-15T10:00:00+00:00",
+        "last_modified": "2025-08-29T22:03:41+00:00",
+        "version": "1.0"
+    }
+}

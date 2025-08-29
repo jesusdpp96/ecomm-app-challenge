@@ -65,6 +65,7 @@ writable/debugbar/*
 
 writable/data/*
 !writable/data/.gitkeep
+!writable/data/products.json
 
 php_errors.log
 
